@@ -1,1 +1,13 @@
 .DS_Store
+# Flutter
+**/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/GeneratedPluginRegistrant.*
+**/local.properties
+**/flutter_export_environment.sh
+**/Flutter/Generated.xcconfig
