@@ -7,3 +7,6 @@ env/
 #py
 __pycache__/
 *.pyc
+
+#video
+**/*.mp4
