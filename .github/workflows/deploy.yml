@@ -19,8 +19,8 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_KEY }}
         script: |
-          cd /home/ubuntu/your-project-folder
-          git pull origin backend
+          cd /home/ubuntu
+          git pull origin main
           npm install
           npm run build
           pm2 restart all || npm run start &
