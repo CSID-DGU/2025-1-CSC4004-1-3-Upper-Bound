@@ -24,4 +24,5 @@ jobs:
           cd backend/getpushup/
           npm install
           npm run build
-          pm2 restart all || npm run start &
+          fuser -k 3000/tcp || true
+          npm run start &
