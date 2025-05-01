@@ -21,6 +21,7 @@ jobs:
         script: |
           cd /home/ubuntu/2025-1-CSC4004-1-3-Upper-Bound
           git pull origin main
+          cd /backend/getpushup/
           npm install
           npm run build
           pm2 restart all || npm run start &
