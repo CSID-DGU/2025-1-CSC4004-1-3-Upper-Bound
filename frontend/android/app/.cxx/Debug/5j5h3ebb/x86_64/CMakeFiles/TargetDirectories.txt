@@ -1,0 +1,2 @@
+D:/flutterWorkspace/pushup_app_Workspace/2025-1-CSC4004-1-3-Upper-Bound/frontend/android/app/.cxx/Debug/5j5h3ebb/x86_64/CMakeFiles/edit_cache.dir
+D:/flutterWorkspace/pushup_app_Workspace/2025-1-CSC4004-1-3-Upper-Bound/frontend/android/app/.cxx/Debug/5j5h3ebb/x86_64/CMakeFiles/rebuild_cache.dir
