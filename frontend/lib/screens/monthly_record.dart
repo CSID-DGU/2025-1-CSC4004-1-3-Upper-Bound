@@ -1,22 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/daily_record.dart'; // DailyRecordPage를 import
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '운동 기록',
-      theme: ThemeData(
-        primaryColor: Colors.blue,
-      ),
-      home: MonthlyRecordPage(), // 월간 기록 페이지로 이동
-    );
-  }
-}
+import 'daily_record.dart'; // DailyRecordPage를 import
 
 class MonthlyRecordPage extends StatefulWidget {
   const MonthlyRecordPage({Key? key}) : super(key: key);
@@ -33,45 +16,46 @@ class _MonthlyRecordPageState extends State<MonthlyRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // 좌우 아이콘 간격을 배치
-          children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back), // 이전 월로 이동
-              onPressed: () {
-                setState(() {
-                  // 이전 월로 이동
-                  if (selectedMonth == 1) {
-                    selectedMonth = 12;
-                    selectedYear--;
-                  } else {
-                    selectedMonth--;
-                  }
-                });
-              },
-            ),
-            // 가운데에 현재 월을 표시
-            Text(
-              '$selectedYear년 ${selectedMonth}월',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            IconButton(
-              icon: Icon(Icons.arrow_forward), // 다음 월로 이동
-              onPressed: () {
-                setState(() {
-                  // 다음 월로 이동
-                  if (selectedMonth == 12) {
-                    selectedMonth = 1;
-                    selectedYear++;
-                  } else {
-                    selectedMonth++;
-                  }
-                });
-              },
-            ),
-          ],
-        ),
+        backgroundColor: Colors.black,
+        actions: [
+          // 이전 월로 이동하는 버튼
+          IconButton(
+            icon: Icon(Icons.arrow_left),
+            onPressed: () {
+              setState(() {
+                // 이전 월로 이동
+                if (selectedMonth == 1) {
+                  selectedMonth = 12;
+                  selectedYear--;
+                } else {
+                  selectedMonth--;
+                }
+              });
+            },
+          ),
+
+          // 날짜 표시
+          Text(
+            '$selectedYear년 ${selectedMonth}월',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color:Colors.white),
+          ),
+
+          // 다음 월로 이동하는 버튼
+          IconButton(
+            icon: Icon(Icons.arrow_right),
+            onPressed: () {
+              setState(() {
+                // 다음 월로 이동
+                if (selectedMonth == 12) {
+                  selectedMonth = 1;
+                  selectedYear++;
+                } else {
+                  selectedMonth++;
+                }
+              });
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -124,16 +108,11 @@ class _MonthlyRecordPageState extends State<MonthlyRecordPage> {
                       ),
                     );
                   },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$dayNum',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.normal,
-                      ),
+                  child: Text(
+                    '$dayNum',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 );
