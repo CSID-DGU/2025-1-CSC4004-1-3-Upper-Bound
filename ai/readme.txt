@@ -9,7 +9,7 @@ source aipy/bin/activate
 
 python -m venv aipy
 source aipy/bin/activate   # (또는 윈도우는 aipy\Scripts\activate)
-pip install -r requirements.txt
+pip install -r requirements.txt  #라이브러리 설치
 
-가상환경 스팩
+가상환경 스팩갱신
 pip freeze > requirements.txt
