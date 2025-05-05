@@ -6,9 +6,11 @@ import {
   Body,
   Get,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PushupService } from './pushup.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('pushup')
 export class PushupController {
@@ -27,11 +29,13 @@ export class PushupController {
   }
 
   @Get('analytics')
+  @UseGuards(AuthGuard)
   getAnalyticsList() {
     return this.pushupService.getAllAnalyses();
   }
 
   @Get('analytics/:id')
+  @UseGuards(AuthGuard)
   getAnalyticsDetail(@Param('id') id: string) {
     return this.pushupService.getAnalysisById(id);
   }
