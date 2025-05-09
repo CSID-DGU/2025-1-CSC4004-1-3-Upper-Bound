@@ -15,6 +15,7 @@ export class PushupService {
 
   async analyzePushup(file: any, body: any) {
     const calibration = JSON.parse(body.calibration || '{}');
+    const userId = Number(body.userId);
 
     const id = Date.now().toString(); // 임시 ID
 
@@ -35,6 +36,7 @@ export class PushupService {
         elbow_flexion: [160, 150, 130],
         lower_body_angle: [180, 177, 174],
       },
+      userId,
     };
 
     this.analyses.push(result);
