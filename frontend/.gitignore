@@ -1,4 +1,6 @@
+# ---------------------------------------
 # Miscellaneous
+# ---------------------------------------
 *.class
 *.log
 *.pyc
@@ -10,18 +12,18 @@
 .svn/
 migrate_working_dir/
 
-# IntelliJ related
+# ---------------------------------------
+# IDE 관련
+# ---------------------------------------
 *.iml
 *.ipr
 *.iws
 .idea/
+# .vscode/ # 필요 시 주석 제거
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
+# ---------------------------------------
+# Flutter / Dart / Pub 관련
+# ---------------------------------------
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -29,19 +31,27 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+build/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# ---------------------------------------
+# Android 관련
+# ---------------------------------------
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# Ignore all intermediate Android build artifacts
 android/**/build/
 android/**/.cxx/
+
+# ---------------------------------------
+# 기타 자동 생성 파일
+# ---------------------------------------
+*.bin
+*.json
+*.xml
+*.txt
+
+# ---------------------------------------
+# Symbolication / Obfuscation
+# ---------------------------------------
+app.*.symbols
+app.*.map.json
