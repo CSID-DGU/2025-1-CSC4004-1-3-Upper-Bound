@@ -7,6 +7,8 @@ import {
   Get,
   Param,
   UseGuards,
+  Req,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PushupService } from './pushup.service';
@@ -30,13 +32,19 @@ export class PushupController {
 
   @Get('analytics')
   @UseGuards(AuthGuard)
-  getAnalyticsList() {
-    return this.pushupService.getAllAnalyses();
+  getAnalyticsList(@Req() req) {
+  return this.pushupService.getAllAnalysesByUser(req.user.userId);
   }
 
   @Get('analytics/:id')
   @UseGuards(AuthGuard)
-  getAnalyticsDetail(@Param('id') id: string) {
-    return this.pushupService.getAnalysisById(id);
+  getAnalyticsDetail(@Param('id') id: string, @Req() req) {
+  return this.pushupService.getAnalysisByIdForUser(id, req.user.userId);
+  }
+
+  @Delete('analytics/:id')
+  @UseGuards(AuthGuard)
+  deleteAnalysis(@Param('id') id: string, @Req() req) {
+  return this.pushupService.deleteAnalysisById(id, req.user.userId);
   }
 }

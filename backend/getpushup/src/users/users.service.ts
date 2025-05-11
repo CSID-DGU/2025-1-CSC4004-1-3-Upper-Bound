@@ -10,14 +10,13 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
-
-  async create(email: string, password: string, height?: number): Promise<User> {
-    const hashed = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({ email, password: hashed, height });
-    return this.usersRepository.save(user);
+  async create(userId: string, password: string): Promise<User> {
+  const hashed = await bcrypt.hash(password, 10);
+  const user = this.usersRepository.create({ userId, password: hashed });
+  return this.usersRepository.save(user);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
-  }
+async findByUserId(userId: string): Promise<User | null> {
+  return this.usersRepository.findOne({ where: { userId } });
+}
 }
