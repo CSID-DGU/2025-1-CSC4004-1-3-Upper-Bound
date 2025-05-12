@@ -6,6 +6,7 @@ import { PushupModule } from './pushup/pushup.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity'; 
+import { AnalysisModule } from './analysis/analysis.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { User } from './users/user.entity';
     //   synchronize: true,   
     // }),
     PushupModule,
+    AnalysisModule,
     // UsersModule,
     // AuthModule,
   ],
