@@ -58,7 +58,13 @@ def detect_and_display(video_path): # landmark 추출
     if not cap.isOpened():
         print(f"Error: Cannot open video {video_path}")
         return
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
 
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 🔺 추가됨
+    out = cv2.VideoWriter('output_pose.mp4', fourcc, fps, (width, height))
+    print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
 
     while cap.isOpened():
@@ -79,21 +85,29 @@ def detect_and_display(video_path): # landmark 추출
 
         if results.pose_landmarks: # 포즈가 감지된 경우
             # landmark 그리기
-            # mp_drawing.draw_landmarks( 
-            #     image,
-            #     results.pose_landmarks,
-            #     mp_pose.POSE_CONNECTIONS,
-            #     mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-            #     mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
-            # )
+            mp_drawing.draw_landmarks( 
+                image,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
+            )
             
         # 왼쪽 어깨, 팔꿈치, 손목만 빨간 점으로 덮어 그림
             h, w, _ = image.shape
             landmarks = results.pose_landmarks.landmark
 
             for idx in [LEFT_SHOULDER, LEFT_ELBOW, LEFT_WRIST]:
-                cx, cy = int(landmarks[idx].x * w), int(landmarks[idx].y * h)
+                landmark = landmarks[idx]
+                cx, cy = int(landmark.x * w), int(landmark.y * h)
+                cz = landmark.z  # z는 상대적 깊이 정보 (단위: 대략 normalized scale)
+
                 cv2.circle(image, (cx, cy), 5, (0, 0, 255), -1)  # 빨간 점
+
+                # 소수점 3자리까지 z 좌표 포함해서 텍스트 출력
+                coord_text = f"({cx}, {cy}, {cz:.3f})"
+                cv2.putText(image, coord_text, (cx + 10, cy - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
             #list에 저장용
             for landmark in results.pose_landmarks.landmark:
@@ -107,7 +121,8 @@ def detect_and_display(video_path): # landmark 추출
         landmark_list.append(row)
 
         #실시간 영상 보여주기
-        # cv2.imshow('Pose Detection', image)
+        cv2.imshow('Pose Detection', image)
+        out.write(image)
         frame_idx += 1
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -116,8 +131,9 @@ def detect_and_display(video_path): # landmark 추출
     landmark_array = np.array(landmark_list)
     #print("Shape:", landmark_array.shape)
     #print("First 3 frames:\n", landmark_array[:3, :])
-
+    out.release()
     cap.release()
+    
     cv2.destroyAllWindows()
 
 def calculate_angle(a, b, c):
@@ -172,13 +188,13 @@ def analysis():
         wrix.append(wrist[0])
 
         #팔꿈치 가동범위
-        elbow_angle = calculate_angle(shoulder, elbow, wrist)
+        elbow_angle = calculate_angle(shoulder[:2], elbow[:2], wrist[:2])
         elbow_angles.append(elbow_angle)
         smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
 
         #하체 정렬
-        hip_angle = calculate_angle(shoulder, hip, knee)
-        knee_angle = calculate_angle(hip, knee, ankle)
+        hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
+        knee_angle = calculate_angle(hip[:2], knee[:2], ankle[:2])
         hip_angles.append(hip_angle)
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
@@ -243,7 +259,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "wide0.mp4")
+    video_path = os.path.join(os.getcwd(), "wide90.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()
