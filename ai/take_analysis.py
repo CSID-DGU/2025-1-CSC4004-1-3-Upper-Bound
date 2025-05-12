@@ -79,13 +79,13 @@ def detect_and_display(video_path): # landmark 추출
 
         if results.pose_landmarks: # 포즈가 감지된 경우
             # landmark 그리기
-            mp_drawing.draw_landmarks( 
-                image,
-                results.pose_landmarks,
-                mp_pose.POSE_CONNECTIONS,
-                mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-                mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
-            )
+            # mp_drawing.draw_landmarks( 
+            #     image,
+            #     results.pose_landmarks,
+            #     mp_pose.POSE_CONNECTIONS,
+            #     mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+            #     mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
+            # )
             
         # 왼쪽 어깨, 팔꿈치, 손목만 빨간 점으로 덮어 그림
             h, w, _ = image.shape
@@ -107,7 +107,7 @@ def detect_and_display(video_path): # landmark 추출
         landmark_list.append(row)
 
         #실시간 영상 보여주기
-        cv2.imshow('Pose Detection', image)
+        # cv2.imshow('Pose Detection', image)
         frame_idx += 1
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -144,7 +144,7 @@ def get_coord(row, idx):
     return [row[base], row[base + 1], row[base + 2]]
 
 def analysis():
-    global smooth_elbow, bottom_position, top_position
+    global smooth_elbow, avg_elbow_rom, bottom_position, top_position
     for idx, row in enumerate(landmark_list):
         shoulder = get_coord(row, LEFT_SHOULDER)
         elbow = get_coord(row, LEFT_ELBOW)
@@ -182,12 +182,14 @@ def analysis():
         hip_angles.append(hip_angle)
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
+
     top_position, _ = find_peaks(smooth_elbow)
     bottom_position, _ = find_peaks(-smooth_elbow)
+    avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
-    print(top_position)
-    print(bottom_position)
-    print(avg_lower_alignment)
+    
+    print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
+    print(f"하체 정렬 : {avg_lower_alignment}")
         
 def plot_joint_angles():
     frames = list(range(len(elbow_angles)))  # 프레임 번호 기준 x축
@@ -233,9 +235,8 @@ def plot_joint_angles():
     # plt.plot(frames, height1, color='green')
     # plt.xlabel("Frame")
     # plt.ylabel("pixel")
-    # plt.title("카")
+    # plt.title("height")
     # plt.grid(True)
-
 
     plt.suptitle("Joint Angles Over Time")
     plt.tight_layout(rect=[0, 0, 1, 0.95])

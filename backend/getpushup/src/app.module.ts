@@ -9,19 +9,19 @@ import { User } from './users/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres', 
-      password: '0000', 
-      database: 'pushup_db', 
-      entities: [User],
-      synchronize: true,   
-    }),
+    // TypeOrmModule.forRoot({
+    //   type: 'postgres',
+    //   host: 'localhost',
+    //   port: 5432,
+    //   username: 'postgres', 
+    //   password: '0000', 
+    //   database: 'pushup_db', 
+    //   entities: [User],
+    //   synchronize: true,   
+    // }),
     PushupModule,
-    UsersModule,
-    AuthModule,
+    // UsersModule,
+    // AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
