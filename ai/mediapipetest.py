@@ -31,6 +31,7 @@ def detect_and_save(video_path):
     header = ['frame']
     for idx in range(33):  # 33개의 포즈 랜드마크 (mediapipe 기준)
         header += [f'x{idx}', f'y{idx}', f'z{idx}', f'visibility{idx}']
+
     csv_writer.writerow(header)
 
     frame_idx = 0
@@ -66,6 +67,7 @@ def detect_and_save(video_path):
             # 랜드마크 못 찾으면 빈 값
             row.extend([None] * 33 * 4)
 
+        #print(row)
         csv_writer.writerow(row)
 
         # 영상 프레임 저장

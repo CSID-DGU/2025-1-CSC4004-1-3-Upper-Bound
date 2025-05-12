@@ -7,6 +7,7 @@ import math
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 
 # MediaPipe Pose 초기화
@@ -18,6 +19,8 @@ landmark_list = [] # landmark output
 
 # 각도 저장할 리스트
 elbow_angles = []
+smooth_elbow = []
+
 hip_angles = []
 knee_angles = []
 lower_body_alignment = []
@@ -30,6 +33,14 @@ elbx = []
 wrix = []
 
 height1 = []
+
+# 점수 지표
+total_score = 0
+top_position = []
+bottom_position = []
+
+avg_elbow_rom = 0
+avg_lower_alignment = 0
 # Pose landmarks 번호 (MediaPipe 기준)
 LEFT_EYE = 2
 LEFT_SHOULDER = 11
@@ -75,6 +86,15 @@ def detect_and_display(video_path): # landmark 추출
                 mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
                 mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
             )
+            
+        # 왼쪽 어깨, 팔꿈치, 손목만 빨간 점으로 덮어 그림
+            h, w, _ = image.shape
+            landmarks = results.pose_landmarks.landmark
+
+            for idx in [LEFT_SHOULDER, LEFT_ELBOW, LEFT_WRIST]:
+                cx, cy = int(landmarks[idx].x * w), int(landmarks[idx].y * h)
+                cv2.circle(image, (cx, cy), 5, (0, 0, 255), -1)  # 빨간 점
+
             #list에 저장용
             for landmark in results.pose_landmarks.landmark:
                 row.extend([landmark.x, landmark.y, landmark.z, landmark.visibility])
@@ -124,6 +144,7 @@ def get_coord(row, idx):
     return [row[base], row[base + 1], row[base + 2]]
 
 def analysis():
+    global smooth_elbow, bottom_position, top_position
     for idx, row in enumerate(landmark_list):
         shoulder = get_coord(row, LEFT_SHOULDER)
         elbow = get_coord(row, LEFT_ELBOW)
@@ -153,6 +174,7 @@ def analysis():
         #팔꿈치 가동범위
         elbow_angle = calculate_angle(shoulder, elbow, wrist)
         elbow_angles.append(elbow_angle)
+        smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
 
         #하체 정렬
         hip_angle = calculate_angle(shoulder, hip, knee)
@@ -160,6 +182,12 @@ def analysis():
         hip_angles.append(hip_angle)
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
+    top_position, _ = find_peaks(smooth_elbow)
+    bottom_position, _ = find_peaks(-smooth_elbow)
+    avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
+    print(top_position)
+    print(bottom_position)
+    print(avg_lower_alignment)
         
 def plot_joint_angles():
     frames = list(range(len(elbow_angles)))  # 프레임 번호 기준 x축
@@ -186,25 +214,27 @@ def plot_joint_angles():
     plt.legend()
 
     plt.subplot(2, 2, 3)
-    plt.plot(frames, elbow_angles, color='blue')
+    plt.plot(frames, smooth_elbow, color='blue')
+    plt.scatter(top_position,[smooth_elbow[i] for i in top_position],color='y')
+    plt.scatter(bottom_position,[smooth_elbow[i] for i in bottom_position],color='r')
     plt.xlabel("Frame")
     plt.ylabel("Angle (°)")
     plt.title("Elbow Angle")
     plt.grid(True)
 
-    # plt.subplot(2, 2, 4)
-    # plt.plot(frames, lower_body_alignment, color='green')
-    # plt.xlabel("Frame")
-    # plt.ylabel("Angle (°)")
-    # plt.title("Lowbody Aligment")
-    # plt.grid(True)
-
     plt.subplot(2, 2, 4)
-    plt.plot(frames, height1, color='green')
+    plt.plot(frames, lower_body_alignment, color='green')
     plt.xlabel("Frame")
-    plt.ylabel("pixel")
-    plt.title("카")
+    plt.ylabel("Angle (°)")
+    plt.title("Lowbody Aligment")
     plt.grid(True)
+
+    # plt.subplot(2, 2, 4)
+    # plt.plot(frames, height1, color='green')
+    # plt.xlabel("Frame")
+    # plt.ylabel("pixel")
+    # plt.title("카")
+    # plt.grid(True)
 
 
     plt.suptitle("Joint Angles Over Time")
@@ -212,7 +242,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "wide90.mp4")
+    video_path = os.path.join(os.getcwd(), "wide0.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()
