@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 
+import sys
+
 # MediaPipe Pose 초기화
 mp_pose = mp.solutions.pose # Pose 모듈 로딩
 pose = mp_pose.Pose() # Pose 추정기 객체 생성
@@ -290,7 +292,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "video.mp4")
+    video_path = os.path.join(os.getcwd(), "widetest.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()
