@@ -8,12 +8,18 @@ class DisplayVideoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(title: const Text('촬영한 영상')),
       body: Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: VideoPlayerWidget(videoPath: videoPath),
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: size.width,
+            height: size.height * 0.6,
+            child: VideoPlayerWidget(videoPath: videoPath),
+          ),
         ),
       ),
     );

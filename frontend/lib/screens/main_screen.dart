@@ -19,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+
     _controller = CameraController(
       widget.camera,
       ResolutionPreset.high,
@@ -60,13 +61,22 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('메인 페이지')),
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
+            final previewSize = _controller.value.previewSize!;
+            final previewAspectRatio = previewSize.height / previewSize.width;
+
+            return Center(
+              child: AspectRatio(
+                aspectRatio: previewAspectRatio,
+                child: CameraPreview(_controller),
+              ),
+            );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -74,8 +84,12 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _toggleRecording,
-        child: Icon(_isRecording ? Icons.stop : Icons.videocam),
+        child: Transform.rotate(
+          angle: -1.5708, // -90도 (radian 단위)
+          child: Icon(_isRecording ? Icons.stop : Icons.videocam),
+        ),
       ),
     );
   }
+
 }
