@@ -74,8 +74,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 print("신장: $height");
                 print("상완: $upper");
                 print("전완: $fore");
-
-                // 필요한 경우 여기서 Navigator.pop(context); 등 동작 추가 가능
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[300],

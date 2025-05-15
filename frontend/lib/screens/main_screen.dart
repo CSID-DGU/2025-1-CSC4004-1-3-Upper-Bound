@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'display_video_screen.dart';
+import '../utils/hand_guide_painter.dart';
 
 class MainScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -74,7 +75,17 @@ class _MainScreenState extends State<MainScreen> {
             return Center(
               child: AspectRatio(
                 aspectRatio: previewAspectRatio,
-                child: CameraPreview(_controller),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CameraPreview(_controller),
+
+                    // 가이드라인 오버레이
+                    CustomPaint(
+                      painter: HandGuidePainter(),
+                    ),
+                  ],
+                ),
               ),
             );
           } else {
@@ -84,12 +95,18 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _toggleRecording,
+        backgroundColor: Colors.grey[300],
         child: Transform.rotate(
-          angle: -1.5708, // -90도 (radian 단위)
-          child: Icon(_isRecording ? Icons.stop : Icons.videocam),
+          angle: -1.5708,
+          child: Icon(
+            _isRecording ? Icons.stop : Icons.videocam,
+            color: Colors.black,
+          ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+
 
 }
