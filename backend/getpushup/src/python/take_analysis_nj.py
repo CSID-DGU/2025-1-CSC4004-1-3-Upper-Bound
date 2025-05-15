@@ -1,3 +1,4 @@
+import json
 import cv2
 import mediapipe as mp
 import os
@@ -65,8 +66,9 @@ def detect_and_display(video_path): # landmark 추출
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
-        print(f"Error: Cannot open video {video_path}")
-        return
+        error = {"error": f"Cannot open video {video_path}"}
+        print(json.dumps(error))
+        sys.exit(1)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -79,7 +81,7 @@ def detect_and_display(video_path): # landmark 추출
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
-            print("End of video.")
+            #print("End of video.")
             break
 
         # BGR(기본 OpenCV 포맷) → RGB (MediaPipe는 RGB 사용)
@@ -232,10 +234,19 @@ def analysis():
     avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
     
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
-    print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
-    print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
-    print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
-    print(f"하체 정렬 : {avg_lower_alignment}")
+    # print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
+    # print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
+    # print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
+    # print(f"하체 정렬 : {avg_lower_alignment}")
+    result = {
+    "max_elbow_alignment": max_elbow_alignment,
+    "min_elbow_alignment": min_elbow_alignment,
+    "abduction_angle": abduction_point * 112.3605 - 177.2080,
+    "avg_elbow_rom": avg_elbow_rom,
+    "avg_lower_alignment": avg_lower_alignment
+    }
+    print(json.dumps(result))
+
         
 def plot_joint_angles():
     frames = list(range(len(elbow_angles)))  # 프레임 번호 기준 x축
@@ -294,7 +305,9 @@ def plot_joint_angles():
 if __name__ == "__main__":
     
     if len(sys.argv) < 2:
-        print("Error: No video path provided")
+        error = {"error": f" No video path provided"}
+        print(json.dumps(error))
+        sys.exit(1)
     else:
         #video_path = os.path.join(os.getcwd(), "wide0.mp4")
         video_path = sys.argv[1]

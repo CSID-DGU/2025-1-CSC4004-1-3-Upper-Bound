@@ -39,11 +39,11 @@ export class PushupController {
     try {
       // Python 파일 실행 (예: process_video.py)
       const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}"`);
-      if (stderr) {
+      if (stderr) { 
         console.error('Python error:', stderr);
       }
-
-      return { message: '분석 완료', output: stdout.trim() };
+      const result = JSON.parse(stdout);
+      return { message: '분석 완료', data: result };
     } catch (err) {
       console.error('실행 실패:', err);
       return { message: '실패', error: err };
