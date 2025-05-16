@@ -41,7 +41,6 @@ export class PushupService {
 
     return {
       analysisId: id,
-      summary: result.summary,
     };
   }
 
