@@ -13,8 +13,7 @@ export class PushupService {
     };
   }
 
-  async analyzePushup(file: any, body: any) {
-    const calibration = JSON.parse(body.calibration || '{}');
+  async analyzePushup(body: any) {
     const userId = Number(body.userId);
 
     const id = Date.now().toString(); // 임시 ID
@@ -25,16 +24,15 @@ export class PushupService {
       repetition_count: 10,
       score: 87.2,
       summary: {
-        elbow_motion: 15.3,
-        shoulder_abduction: 43.2,
-        elbow_flexion: { min: 54, max: 172 },
-        lower_body_alignment_score: 91.8,
+        elbow_motion: body.elbow_alignment,
+        shoulder_abduction: body.abduction_angle,
+        elbow_flexion: body.avg_elbow_rom,
+        lower_body_alignment_score: body.avg_lower_alignment,
       },
       timeseries: {
-        elbow_y: [0.1, 0.2, 0.3],
-        shoulder_abduction: [40, 42, 43],
-        elbow_flexion: [160, 150, 130],
-        lower_body_angle: [180, 177, 174],
+        elbow_y: body.elbow_alignment_timeline,
+        elbow_flexion: body.elbow_rom_timeline,
+        lower_body_angle: body.lower_alignment_timline,
       },
       userId,
     };

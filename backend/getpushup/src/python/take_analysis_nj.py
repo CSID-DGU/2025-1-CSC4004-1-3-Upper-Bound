@@ -132,7 +132,7 @@ def detect_and_display(video_path): # landmark 추출
         landmark_list.append(row)
 
         #실시간 영상 보여주기
-        cv2.imshow('Pose Detection', image)
+        #cv2.imshow('Pose Detection', image)
         # out.write(image)
         frame_idx += 1
 
@@ -239,11 +239,13 @@ def analysis():
     # print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     # print(f"하체 정렬 : {avg_lower_alignment}")
     result = {
-    "max_elbow_alignment": max_elbow_alignment,
-    "min_elbow_alignment": min_elbow_alignment,
+    "elbow_alignment": min_elbow_alignment,
     "abduction_angle": abduction_point * 112.3605 - 177.2080,
     "avg_elbow_rom": avg_elbow_rom,
-    "avg_lower_alignment": avg_lower_alignment
+    "avg_lower_alignment": avg_lower_alignment,
+    "elbow_alignment_timeline": elbow_x,
+    "elbow_rom_timeline": smooth_elbow.tolist(),
+    "lower_alignment_timline": lower_body_alignment,
     }
     print(json.dumps(result))
 
@@ -313,4 +315,4 @@ if __name__ == "__main__":
         video_path = sys.argv[1]
         detect_and_display(video_path)
         analysis()
-        plot_joint_angles()
+        #plot_joint_angles()
