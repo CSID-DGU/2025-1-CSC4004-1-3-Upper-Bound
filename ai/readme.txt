@@ -1,7 +1,7 @@
 가상환경 생성
 python3.10 --version
 python3.10 -m venv aipy
-
+python 3.10.17
 
 
 가상환경 실행
