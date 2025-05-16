@@ -68,9 +68,9 @@ export class PushupController {
 
 
   @Get('analytics')
-  @UseGuards(AuthGuard)
+  //@UseGuards(AuthGuard)
   getAnalyticsList(@Req() req) {
-  return this.pushupService.getAllAnalysesByUser(req.user.userId);
+  return this.pushupService.getAllAnalysesByUser();
   }
 
   @Get('analytics/:id')

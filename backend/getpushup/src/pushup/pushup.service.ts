@@ -44,9 +44,9 @@ export class PushupService {
     };
   }
 
-  getAllAnalysesByUser(userId: number) {
+  getAllAnalysesByUser() {
   return this.analyses
-    .filter(a => a.userId === userId)
+    //.filter(a => a.userId === userId)
     .map(({ id, createdAt, repetition_count, score }) => ({
       id,
       createdAt,
