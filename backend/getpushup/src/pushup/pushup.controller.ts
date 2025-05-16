@@ -43,6 +43,7 @@ export class PushupController {
         console.error('Python error:', stderr);
       }
       const result = JSON.parse(stdout);
+      //result 정보로 analytics 생성가능
       return { message: '분석 완료', data: result };
     } catch (err) {
       console.error('실행 실패:', err);
