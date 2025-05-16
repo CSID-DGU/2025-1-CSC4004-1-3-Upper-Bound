@@ -15,16 +15,21 @@ Future<void> main() async {
   ]);
 
   cameras = await availableCameras();
-  runApp(const MyApp());
+
+  final frontCamera = cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+  );
+
+  runApp(MyApp(camera: frontCamera));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final CameraDescription camera;
+
+  const MyApp({super.key, required this.camera});
 
   @override
   Widget build(BuildContext context) {
-    final defaultCamera = cameras.first;
-
     return MaterialApp(
       title: 'Dementia App',
       theme: ThemeData(primarySwatch: Colors.blue),
@@ -33,8 +38,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
-        '/root': (context) => RootScreen(camera: defaultCamera),
+        '/root': (context) => RootScreen(camera: camera),
       },
     );
   }
 }
+

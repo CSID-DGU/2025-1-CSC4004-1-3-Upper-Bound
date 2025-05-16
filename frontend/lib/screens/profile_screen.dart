@@ -53,8 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: Container(),
-        title: const Text('내 정보', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: Padding(
