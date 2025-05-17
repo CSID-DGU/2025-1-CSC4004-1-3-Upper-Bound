@@ -16,7 +16,6 @@ import { extname } from 'path';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { PushupService } from './pushup.service';
-import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('pushup')
 export class PushupController {
@@ -60,25 +59,22 @@ export class PushupController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: any, @Body() body: any) {
-    return this.pushupService.analyzePushup(file, body);
+  upload(@UploadedFile() file: any, @Body() body: any) {
+  return this.pushupService.analyzePushup(file, body);
   }
 
-
   @Get('analytics')
-  @UseGuards(AuthGuard)
   getAnalyticsList(@Req() req) {
   return this.pushupService.getAllAnalysesByUser(req.user.userId);
   }
 
   @Get('analytics/:id')
-  @UseGuards(AuthGuard)
   getAnalyticsDetail(@Param('id') id: string, @Req() req) {
   return this.pushupService.getAnalysisByIdForUser(id, req.user.userId);
   }
 
+
   @Delete('analytics/:id')
-  @UseGuards(AuthGuard)
   deleteAnalysis(@Param('id') id: string, @Req() req) {
   return this.pushupService.deleteAnalysisById(id, req.user.userId);
   }
