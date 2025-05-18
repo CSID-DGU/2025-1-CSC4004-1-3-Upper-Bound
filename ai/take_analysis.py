@@ -237,9 +237,14 @@ def analysis():
     
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
 
+    #점수 1팔꿈치 정렬, 2가동범위, 3하체정렬
+    score1 = min(100, max(0, (min_elbow_alignment - 45 ) * 100 // 45))
+    score2 = min(100, max(0, avg_elbow_rom * 100 // 90))
+    score3 = max(0, min(100, (90 - avg_lower_alignment) * 100 // 70))
     pushup_count = len(bottom_position)
     print(f"푸시업 개수 {pushup_count}")
-    print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
+    print(f"점수 {score1} {score2} {score3}")
+    print(f"팔꿈치 정렬 각도 : 최소 {min_elbow_alignment}")
     print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
     print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     print(f"하체 정렬 : {avg_lower_alignment}")
@@ -299,7 +304,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "widetest.mp4")
+    video_path = os.path.join(os.getcwd(), "kong.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()
