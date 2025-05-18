@@ -3,10 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PushupModule } from './pushup/pushup.module';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
-import { User } from './users/user.entity'; 
 import { AnalysisModule } from './analysis/analysis.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,7 +20,7 @@ import { AnalysisModule } from './analysis/analysis.module';
     }),
     PushupModule,
     AnalysisModule,
-    UsersModule,
+    // UsersModule,
     AuthModule,
   ],
   controllers: [AppController],
