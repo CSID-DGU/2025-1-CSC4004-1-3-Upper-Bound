@@ -9,6 +9,8 @@ import {
   UseGuards,
   Req,
   Delete,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -16,7 +18,6 @@ import { extname } from 'path';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { PushupService } from './pushup.service';
-import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('pushup')
 export class PushupController {
@@ -34,54 +35,51 @@ export class PushupController {
       }),
     }),
   )
-  async uploadAndRunPython(@UploadedFile() file: Express.Multer.File) {
+  async uploadAndRunPython(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { userId: string },) {
+    if (!body.userId) {
+      throw new BadRequestException('userId는 필수입니다.');
+    }
     const videoPath = file.path;
     const execPromise = util.promisify(exec);
-    const pythonPath = '/Users/seohanyu/Documents/GitHub/DGUopenSW/2025-1-CSC4004-1-3-Upper-Bound/ai/aipy/bin/python';
+    //const pythonPath = '/Users/seohanyu/Documents/GitHub/DGUopenSW/2025-1-CSC4004-1-3-Upper-Bound/ai/aipy/bin/python';
+    const pythonPath = 'python'
     try {
-      // Python 파일 실행 (예: process_video.py)
       const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}"`);
       if (stderr) { 
         console.error('Python error:', stderr);
       }
       const result = JSON.parse(stdout);
-      //result 정보로 analytics 생성가능
-      //return { message: '분석 완료', data: result };
-      return this.pushupService.analyzePushup(result);
+
+      return this.pushupService.analyzePushup(result,body.userId);
     } catch (err) {
       console.error('실행 실패:', err);
       return { message: '실패', error: err };
     }
   }
 
-  @Post('calibration')
-  @UseInterceptors(FileInterceptor('file'))
-  async calibrate(@UploadedFile() file: any) {
-    return this.pushupService.calibrate(file);
+  @Get('analytics/all')
+  getAnalyticsList() {
+  return this.pushupService.getAllAnalyses();
   }
-
-  // @Post('upload')
-  // @UseInterceptors(FileInterceptor('file'))
-  // async upload(@UploadedFile() file: any, @Body() body: any) {
-  //   return this.pushupService.analyzePushup(file, body);
-  // }
-
 
   @Get('analytics')
-  @UseGuards(AuthGuard)
-  getAnalyticsList(@Req() req) {
-  return this.pushupService.getAllAnalysesByUser(req.user.userId);
+  getAnalytics(
+    @Query('userId') userId?: string,
+    @Query('analysisId') analysisId?: string,
+  ) {
+    if (userId) {
+      return this.pushupService.getAllAnalysesByUser(userId);
+    } else if (analysisId) {
+      return this.pushupService.getAnalysisById(analysisId);
+    } else {
+      throw new BadRequestException('userId 또는 analysisId 중 하나는 필요합니다.');
+    }
   }
 
-  @Get('analytics/:id')
-  @UseGuards(AuthGuard)
-  getAnalyticsDetail(@Param('id') id: string, @Req() req) {
-  return this.pushupService.getAnalysisByIdForUser(id, req.user.userId);
-  }
-
-  @Delete('analytics/:id')
-  @UseGuards(AuthGuard)
-  deleteAnalysis(@Param('id') id: string, @Req() req) {
-  return this.pushupService.deleteAnalysisById(id, req.user.userId);
-  }
+  @Delete('analytics/:analysisId')
+  deleteAnalysis(@Param('analysisId') id: string) {
+  return this.pushupService.deleteAnalysisById(id);
+  } 
 }

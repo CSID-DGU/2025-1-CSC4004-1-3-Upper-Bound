@@ -1,23 +1,27 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
 
-@Controller('auth')
+@Controller('user')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private usersService: UsersService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signup(@Body() body: { userId: string; password: string }) {
-  return this.usersService.create(body.userId, body.password);
+  signup(@Body() body: { userId: string; password: string; height: number }) {
+  if (!body.height) {
+    console.log('Received body:', body); 
+    throw new BadRequestException('키(height)는 필수 항목입니다.');
+  }
+  return this.authService.signup(body.userId, body.password, body.height);
   }
 
-
   @Post('login')
-  async login(@Body() body: { userId: string; password: string }) {
-  const user = await this.authService.validateUser(body.userId, body.password);
-  return this.authService.login(user);
+  login(@Body() body: { userId?: string; password?: string }) {
+  const { userId, password } = body;
+
+  if (!userId || !password) {
+    throw new BadRequestException('로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.');
+  }
+
+  return this.authService.login(userId, password);
   }
 }

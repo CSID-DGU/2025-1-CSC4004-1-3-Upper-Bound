@@ -5,7 +5,6 @@ import os
 import numpy as np
 import math
 
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy.signal import find_peaks
@@ -73,7 +72,7 @@ def detect_and_display(video_path): # landmark 추출
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 🔺 추가됨
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
     # out = cv2.VideoWriter('output_pose.mp4', fourcc, fps, (width, height))
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
@@ -218,27 +217,41 @@ def analysis():
         hip_angles.append(hip_angle)
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
-
+    #상완 길이
     upper_arm_lengths = gaussian_filter1d(upper_arm_lengths, sigma=2)
     upper_arm_bottom, _ = find_peaks(-upper_arm_lengths)
     upper_arm_point = sum(upper_arm_lengths[upper_arm_bottom])/len(upper_arm_bottom)
     forearm_point = sum(forearm_lengths)/len(forearm_lengths)
     abduction_point = forearm_point/upper_arm_point
-
+    #팔꿈치 정렬
     max_elbow_alignment = max(elbow_x)
     min_elbow_alignment = min(elbow_x)
-
+    #팔꿈치 가동범위
     smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
     top_position, _ = find_peaks(smooth_elbow)
     bottom_position, _ = find_peaks(-smooth_elbow)
     avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
-    
+    #하체 정렬
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
     # print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
     # print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
     # print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     # print(f"하체 정렬 : {avg_lower_alignment}")
+
+    #점수
+    score1 = min(100, max(0, (min_elbow_alignment - 45 ) * 100 // 45))
+    score2 = min(100, max(0, avg_elbow_rom * 100 // 90))
+    score3 = max(0, min(100, (90 - avg_lower_alignment) * 100 // 70))
+    pushup_count = len(bottom_position)
+    score1 = score1/100*35
+    score2 = score2/100*35
+    score3 = score3/100*30
     result = {
+    "pushup_count": pushup_count,
+    "score1": score1,
+    "score2": score2,
+    "score3": score3,
+    "total_score": (score1+score2+score3),
     "elbow_alignment": min_elbow_alignment,
     "abduction_angle": abduction_point * 112.3605 - 177.2080,
     "avg_elbow_rom": avg_elbow_rom,
