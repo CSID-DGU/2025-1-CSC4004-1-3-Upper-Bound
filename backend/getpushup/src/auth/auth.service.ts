@@ -1,11 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-
-interface User {
-  id: number;
-  userId: string;
-  password: string;
-  height: number;
-}
+import { User } from './auth.entity';
 
 @Injectable()
 export class AuthService {
@@ -29,12 +23,12 @@ export class AuthService {
     return '회원가입 성공';
   }
 
-  login(userId: string, password: string): string {
+  login(userId: string, password: string): User {
     const user = this.users.find(u => u.userId === userId && u.password === password);
     if (!user) {
       throw new NotFoundException('로그인 실패: 아이디 또는 비밀번호가 잘못되었습니다.');
     }
 
-    return '로그인 성공';
+    return user;
   }
 }
