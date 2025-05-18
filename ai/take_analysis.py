@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 
+import sys
+
 # MediaPipe Pose 초기화
 mp_pose = mp.solutions.pose # Pose 모듈 로딩
 pose = mp_pose.Pose() # Pose 추정기 객체 생성
@@ -27,6 +29,9 @@ lower_body_alignment = []
 elbow_x = []
 upper_arm_lengths = []
 forearm_lengths = []
+z_elbow =[]
+z_shoulder =[]
+z_wrist = []
 
 shox = []
 elbx = []
@@ -39,6 +44,8 @@ total_score = 0
 top_position = []
 bottom_position = []
 
+max_elbow_alignment = 0
+min_elbow_alignment = 0
 avg_elbow_rom = 0
 avg_lower_alignment = 0
 # Pose landmarks 번호 (MediaPipe 기준)
@@ -50,6 +57,8 @@ LEFT_HIP = 23
 LEFT_KNEE = 25
 LEFT_ANKLE = 27
 LEFT_HEEL = 29
+LEFT_TOE = 31
+
 
 
 def detect_and_display(video_path): # landmark 추출
@@ -160,7 +169,10 @@ def get_coord(row, idx):
     return [row[base], row[base + 1], row[base + 2]]
 
 def analysis():
-    global smooth_elbow, avg_elbow_rom, bottom_position, top_position
+    global smooth_elbow, upper_arm_lengths, avg_elbow_rom, bottom_position, top_position
+
+    mid_row = landmark_list[len(landmark_list) // 2]
+    mid_wirst = get_coord(mid_row, LEFT_WRIST)
     for idx, row in enumerate(landmark_list):
         shoulder = get_coord(row, LEFT_SHOULDER)
         elbow = get_coord(row, LEFT_ELBOW)
@@ -170,18 +182,24 @@ def analysis():
         ankle = get_coord(row, LEFT_ANKLE)
         eye = get_coord(row, LEFT_EYE)
         heel = get_coord(row, LEFT_HEEL)   
+        toe = get_coord(row, LEFT_TOE)  
         #키
         height = calculate_distance(heel, eye)
         head = calculate_distance(shoulder, eye)
         height1.append(height+head)
 
         #전완과 팔꿈치 x 좌표 차이
-        elbow_x.append(elbow[0]-wrist[0])
+        elbow_x.append(calculate_angle(elbow[:2], mid_wirst[:2], [mid_wirst[0]+1,mid_wirst[1]]))
+        #elbow_x.append(calculate_angle(elbow[:2], mid_wirst[:2], toe[:2]))
         #어깨 외전
-        upper_arm = calculate_distance(shoulder, elbow)
-        forearm = calculate_distance(elbow, wrist)
+        upper_arm = calculate_distance(shoulder[:2], elbow[:2])
+        forearm = calculate_distance(elbow[:2], wrist[:2])
         upper_arm_lengths.append(upper_arm)
         forearm_lengths.append(forearm)
+
+        z_elbow.append(elbow[2])
+        z_shoulder.append(shoulder[2])
+        z_wrist.append(wrist[2])
 
         shox.append(shoulder[0])
         elbx.append(elbow[0])
@@ -190,7 +208,7 @@ def analysis():
         #팔꿈치 가동범위
         elbow_angle = calculate_angle(shoulder[:2], elbow[:2], wrist[:2])
         elbow_angles.append(elbow_angle)
-        smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
+        
 
         #하체 정렬
         hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
@@ -199,11 +217,23 @@ def analysis():
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
 
+    upper_arm_lengths = gaussian_filter1d(upper_arm_lengths, sigma=2)
+    upper_arm_bottom, _ = find_peaks(-upper_arm_lengths)
+    upper_arm_point = sum(upper_arm_lengths[upper_arm_bottom])/len(upper_arm_bottom)
+    forearm_point = sum(forearm_lengths)/len(forearm_lengths)
+    abduction_point = forearm_point/upper_arm_point
+
+    max_elbow_alignment = max(elbow_x)
+    min_elbow_alignment = min(elbow_x)
+
+    smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
     top_position, _ = find_peaks(smooth_elbow)
     bottom_position, _ = find_peaks(-smooth_elbow)
     avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
-    avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
     
+    avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
+    print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
+    print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
     print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     print(f"하체 정렬 : {avg_lower_alignment}")
         
@@ -220,11 +250,14 @@ def plot_joint_angles():
     plt.grid(True)
 
     plt.subplot(2, 2, 2)
-    # plt.plot(frames, upper_arm_lengths, color='blue', label='upper')
-    # plt.plot(frames, forearm_lengths, color='red', label='fore')
-    plt.plot(frames, wrix, color='blue', label='wrist')
-    plt.plot(frames, elbx, color='red', label='elbow')
-    plt.plot(frames, shox, color='green', label='shol')
+    # plt.plot(frames, z_wrist, color='blue', label='wrist_Z')
+    # plt.plot(frames, z_elbow, color='y', label='elbow_Z')
+    # plt.plot(frames, z_shoulder, color='red', label='shoulder_Z')
+    plt.plot(frames, upper_arm_lengths, color='blue', label='upper')
+    plt.plot(frames, forearm_lengths, color='red', label='fore')
+    # plt.plot(frames, wrix, color='blue', label='wrist')
+    # plt.plot(frames, elbx, color='red', label='elbow')
+    # plt.plot(frames, shox, color='green', label='shol')
     plt.xlabel("Frame")
     plt.ylabel("Angle (°)")
     plt.title("Shoulder Abduction")
@@ -259,7 +292,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "wide90.mp4")
+    video_path = os.path.join(os.getcwd(), "widetest.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()

@@ -21,7 +21,7 @@ import { PushupService } from './pushup.service';
 export class PushupController {
   constructor(private readonly pushupService: PushupService) {}
 
-  @Post('analysis')
+  @Post('upload')
   @UseInterceptors(
     FileInterceptor('video', {
       storage: diskStorage({
@@ -40,11 +40,13 @@ export class PushupController {
     try {
       // Python 파일 실행 (예: process_video.py)
       const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}"`);
-      if (stderr) {
+      if (stderr) { 
         console.error('Python error:', stderr);
       }
-
-      return { message: '분석 완료', output: stdout.trim() };
+      const result = JSON.parse(stdout);
+      //result 정보로 analytics 생성가능
+      //return { message: '분석 완료', data: result };
+      return this.pushupService.analyzePushup(result);
     } catch (err) {
       console.error('실행 실패:', err);
       return { message: '실패', error: err };
@@ -57,11 +59,11 @@ export class PushupController {
     return this.pushupService.calibrate(file);
   }
 
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  upload(@UploadedFile() file: any, @Body() body: any) {
-  return this.pushupService.analyzePushup(file, body);
-  }
+  // @Post('upload')
+  // @UseInterceptors(FileInterceptor('file'))
+  // async upload(@UploadedFile() file: any, @Body() body: any) {
+  //   return this.pushupService.analyzePushup(file, body);
+  // }
 
   @Get('analytics')
   getAnalyticsList(@Req() req) {
