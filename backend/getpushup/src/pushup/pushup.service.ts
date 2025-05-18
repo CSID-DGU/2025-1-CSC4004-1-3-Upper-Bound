@@ -11,8 +11,8 @@ export class PushupService {
       id,
       userId: userId,
       createdAt: new Date(),
-      repetition_count: 10,
-      score: 87.2,
+      repetition_count: body.pushup_count,
+      score: body.total_score,
       summary: {
         elbow_motion: body.elbow_alignment,
         shoulder_abduction: body.abduction_angle,

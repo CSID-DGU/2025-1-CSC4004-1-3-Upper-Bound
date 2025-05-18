@@ -5,7 +5,6 @@ import os
 import numpy as np
 import math
 
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy.signal import find_peaks
@@ -73,7 +72,7 @@ def detect_and_display(video_path): # landmark 추출
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 🔺 추가됨
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
     # out = cv2.VideoWriter('output_pose.mp4', fourcc, fps, (width, height))
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
@@ -240,9 +239,19 @@ def analysis():
     # print(f"하체 정렬 : {avg_lower_alignment}")
 
     #점수
+    score1 = min(100, max(0, (min_elbow_alignment - 45 ) * 100 // 45))
+    score2 = min(100, max(0, avg_elbow_rom * 100 // 90))
+    score3 = max(0, min(100, (90 - avg_lower_alignment) * 100 // 70))
     pushup_count = len(bottom_position)
+    score1 = score1/100*35
+    score2 = score2/100*35
+    score3 = score3/100*30
     result = {
     "pushup_count": pushup_count,
+    "score1": score1,
+    "score2": score2,
+    "score3": score3,
+    "total_score": (score1+score2+score3),
     "elbow_alignment": min_elbow_alignment,
     "abduction_angle": abduction_point * 112.3605 - 177.2080,
     "avg_elbow_rom": avg_elbow_rom,
