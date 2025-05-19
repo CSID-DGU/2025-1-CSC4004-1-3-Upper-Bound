@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -13,7 +12,6 @@ class _SignupPageState extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _heightController = TextEditingController();
-
 
   void _signup() async {
     final id = _emailController.text.trim();
@@ -35,43 +33,24 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://your-backend-url.com/api/signup'), // ← 실제 API 주소로 변경
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'id': id,
-          'password': password,
-          'height': height,
-        }),
-      );
+    final result = await AuthService.signup(id, password, height);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('회원가입이 완료되었습니다.')),
-        );
-        Navigator.pop(context);
-      } else {
-        final msg = jsonDecode(response.body)['message'] ?? '회원가입 실패';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      }
-    } catch (e) {
+    if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('오류 발생: $e')),
+        const SnackBar(content: Text('회원가입이 완료되었습니다.')),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('회원가입 실패')),
       );
     }
-  }
-
-  void _goToLogin() {
-    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-      ),
+      appBar: AppBar(backgroundColor: Colors.black),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -95,7 +74,6 @@ class _SignupPageState extends State<SignupPage> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Height (cm)', border: OutlineInputBorder()),
             ),
-
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: _signup,

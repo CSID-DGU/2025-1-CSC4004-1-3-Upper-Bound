@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -8,20 +9,23 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() {
-    final email = _emailController.text.trim();
+  void _login() async {
+    final id = _idController.text.trim();
     final password = _passwordController.text.trim();
 
-    // 실제 로그인 처리 로직 (예: 서버 통신)이 이 자리에 들어감
-    print('로그인 요청: $email / $password');
+    final result = await AuthService.login(id, password);
 
-    // 로그인 성공 시 루트 화면으로 이동
-    Navigator.pushReplacementNamed(context, '/root');
+    if (result == true) {
+      Navigator.pushReplacementNamed(context, '/root');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인 실패')),
+      );
+    }
   }
-
 
   void _goToSignup() {
     Navigator.pushNamed(context, '/signup');
@@ -30,9 +34,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-      ),
+      appBar: AppBar(backgroundColor: Colors.black),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -41,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
             const Text('Log in', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 30),
             TextField(
-              controller: _emailController,
+              controller: _idController,
               decoration: const InputDecoration(labelText: 'Id', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 20),
