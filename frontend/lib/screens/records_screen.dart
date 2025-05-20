@@ -1,41 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
-import 'analysis1.dart';
+import 'analysis1.dart'; // Analysis1Page import
 
-class RecordsScreen extends StatelessWidget {
-  final CameraDescription? camera;
+class RecordsScreen extends StatefulWidget {
+  const RecordsScreen({Key? key}) : super(key: key);
 
-  const RecordsScreen({Key? key, this.camera}) : super(key: key);
+  @override
+  _RecordsScreenState createState() => _RecordsScreenState();
+}
 
-  static const List<String> records = [
-    '운동기록1',
-    '운동기록2',
-    '운동기록3',
-  ];
+class _RecordsScreenState extends State<RecordsScreen> {
+  // 운동 기록 개수 예시 (실제론 DB/API 연동 가능)
+  final int recordCount = 10;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('운동 기록 목록')),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('운동 기록'),
+      ),
       body: ListView.builder(
-        itemCount: records.length,
+        padding: const EdgeInsets.all(16),
+        itemCount: recordCount,
         itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(records[index]),
-            onTap: () {
-              if (records[index] == '운동기록1') {
+          final recordNum = index + 1;
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              title: Text('운동기록 $recordNum', style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => Analysis1Page(camera: camera),
-                  ),
+                  MaterialPageRoute(builder: (context) => Analysis1Page()),
                 );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${records[index]} 선택됨')),
-                );
-              }
-            },
+              },
+            ),
           );
         },
       ),

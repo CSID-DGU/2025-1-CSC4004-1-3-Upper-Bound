@@ -93,14 +93,20 @@ class _MainScreenState extends State<MainScreen> {
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _toggleRecording,
-        backgroundColor: Colors.grey[300],
-        child: Transform.rotate(
-          angle: -1.5708,
-          child: Icon(
-            _isRecording ? Icons.stop : Icons.videocam,
-            color: Colors.black,
+      floatingActionButton: SizedBox(
+        width: 70,
+        height: 70,
+        child: FloatingActionButton(
+          onPressed: _toggleRecording,
+          backgroundColor: Colors.grey[300],
+          shape: const CircleBorder(),
+          child: Transform.rotate(
+            angle: -1.5708,
+            child: Icon(
+              _isRecording ? Icons.stop : Icons.videocam,
+              color: Colors.black,
+              size: 40,
+            ),
           ),
         ),
       ),
