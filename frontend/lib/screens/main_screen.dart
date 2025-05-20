@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'display_video_screen.dart';
 import '../utils/hand_guide_painter.dart';
+import '../services/video_upload_service.dart';
+import '../globals/auth_user.dart';
 
 class MainScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -43,13 +45,23 @@ class _MainScreenState extends State<MainScreen> {
         final XFile videoFile = await _controller.stopVideoRecording();
         setState(() => _isRecording = false);
 
+
+        final success = await VideoUploadService.uploadVideo(videoFile.path, currentUserId ?? '');
+
         if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DisplayVideoScreen(videoPath: videoFile.path),
-          ),
-        );
+
+        if (success) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DisplayVideoScreen(videoPath: videoFile.path),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('업로드 실패')),
+          );
+        }
       } else {
         await _controller.prepareForVideoRecording();
         await _controller.startVideoRecording();
