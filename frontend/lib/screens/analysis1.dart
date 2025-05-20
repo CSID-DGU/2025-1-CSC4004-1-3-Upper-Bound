@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
 
 import 'analysis2.dart';
 
@@ -14,12 +13,10 @@ class Analysis1Page extends StatefulWidget {
 }
 
 class _Analysis1PageState extends State<Analysis1Page> {
-  VideoPlayerController? _controller;
-
   double palmMove = 95;
   double shoulderOuter = 3;
-  double shoulderInner = 75;
   double elbowAngle = 1;
+  double lowerBodyScore = 0;
 
   bool _isLoading = true;
   String? _rawJson;
@@ -31,23 +28,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
   @override
   void initState() {
     super.initState();
-
-    _controller = VideoPlayerController.asset('assets/video.mp4')
-      ..initialize().then((_) {
-        setState(() {});
-      }).catchError((error) {
-        setState(() {
-          _error = "Video initialization error: $error";
-        });
-      });
-
     loadUserIdAndFetchData();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   Future<void> loadUserIdAndFetchData() async {
@@ -76,37 +57,96 @@ class _Analysis1PageState extends State<Analysis1Page> {
     });
 
     try {
-      final url = Uri.parse('http://43.201.78.241:3000/pushup/analytics?userId=$userId');
+      final listUrl = Uri.parse('http://43.201.78.241:3000/pushup/analytics?userId=$userId');
+      final listResponse = await http.get(listUrl);
 
-      final response = await http.get(url);
+      if (listResponse.statusCode == 200) {
+        final listData = jsonDecode(listResponse.body);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        if (listData is List && listData.isNotEmpty) {
+          final latestAnalysis = listData.last;
+          final analysisId = latestAnalysis['id'];
 
-        setState(() {
-          _rawJson = jsonEncode(data);
-          _summaryJson = jsonEncode(data['summary']);
+          final detailUrl = Uri.parse('http://43.201.78.241:3000/pushup/analytics?analysisId=$analysisId');
+          final detailResponse = await http.get(detailUrl);
 
-          final summary = data['summary'];
-          palmMove = (summary['elbow_motion'] as num).toDouble();
-          shoulderOuter = (summary['shoulder_abduction'] as num).toDouble();
-          elbowAngle = (summary['elbow_flexion'] as num).toDouble();
-          shoulderInner = 75;
+          if (detailResponse.statusCode == 200) {
+            final detailData = jsonDecode(detailResponse.body);
+            final summaryRaw = detailData['summary'];
 
-          _isLoading = false;
-        });
+            if (summaryRaw == null) {
+              setState(() {
+                _error = 'summary 데이터가 없습니다.';
+                _isLoading = false;
+              });
+              return;
+            }
+
+            final summary = (summaryRaw is String) ? jsonDecode(summaryRaw) : summaryRaw;
+
+            setState(() {
+              _rawJson = jsonEncode(detailData);
+              _summaryJson = jsonEncode(summary);
+
+              palmMove = (summary['elbow_motion'] as num?)?.toDouble() ?? 0.0;
+              shoulderOuter = (summary['shoulder_abduction'] as num?)?.toDouble() ?? 0.0;
+              elbowAngle = (summary['elbow_flexion'] as num?)?.toDouble() ?? 0.0;
+              lowerBodyScore = (summary['lower_body_alignment_score'] as num?)?.toDouble() ?? 0.0;
+
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _error = '상세 API 에러: ${detailResponse.statusCode}';
+              _isLoading = false;
+            });
+          }
+        } else {
+          setState(() {
+            _error = '분석 데이터 리스트가 비어있습니다.';
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() {
-          _error = 'API error: ${response.statusCode}';
+          _error = '리스트 API 에러: ${listResponse.statusCode}';
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stacktrace) {
+      print('Fetch error 발생: $e');
+      print('Stacktrace: $stacktrace');
+
       setState(() {
         _error = 'Fetch error: $e';
         _isLoading = false;
       });
     }
+  }
+
+  Widget buildFixedColorSliderRow(String label, double value, double min, double max, {Color color = Colors.blue}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$label : ${value.toStringAsFixed(1)}'),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: color,
+            inactiveTrackColor: color.withOpacity(0.3),
+            thumbColor: color,
+            overlayColor: color.withOpacity(0.2),
+          ),
+          child: IgnorePointer(
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              onChanged: (v) {},
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -130,19 +170,12 @@ class _Analysis1PageState extends State<Analysis1Page> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_controller != null && _controller!.value.isInitialized)
-                AspectRatio(
-                  aspectRatio: _controller!.value.aspectRatio,
-                  child: VideoPlayer(_controller!),
-                )
-              else
-                const Center(child: CircularProgressIndicator()),
               const SizedBox(height: 10),
               Row(
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // 필요하면 측면분석 기능 추가
+                      // 측면분석 기능 연결 가능
                     },
                     child: const Text(
                       '측면분석',
@@ -164,64 +197,28 @@ class _Analysis1PageState extends State<Analysis1Page> {
                     child: const Text(
                       '정면분석',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        fontSize: 14,
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              buildSliderRow('팔꿈치 이동 정도(cm)', palmMove, 90, 110, (value) {
-                setState(() {
-                  palmMove = value;
-                });
-              }),
-              buildSliderRow('어깨 외전 각도(°)', shoulderOuter, 0, 50, (value) {
-                setState(() {
-                  shoulderOuter = value;
-                });
-              }, color: Colors.red),
-              buildSliderRow('어깨 내전 각도(°)', shoulderInner, 60, 90, (value) {
-                setState(() {
-                  shoulderInner = value;
-                });
-              }, color: Colors.red),
-              buildSliderRow('팔꿈치 굴곡 범위의 차(°)', elbowAngle, 0, 110, (value) {
-                setState(() {
-                  elbowAngle = value;
-                });
-              }),
+              buildFixedColorSliderRow('팔꿈치 이동 정도(cm)', palmMove, 90, 110),
+              buildFixedColorSliderRow('어깨 외전 각도(°)', shoulderOuter, -100, 100, color: Colors.blue),
+              buildFixedColorSliderRow('팔꿈치 굴곡 범위의 차(°)', elbowAngle, 0, 110),
+              buildFixedColorSliderRow('하체 정렬 점수(점)', lowerBodyScore, 0, 100, color: Colors.blue),
               const SizedBox(height: 30),
-              const Text('■ API 응답 전체 JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(_rawJson ?? '없음', style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 20),
-              const Text('■ summary JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(_summaryJson ?? '없음', style: const TextStyle(fontSize: 12)),
+              // const Text('■ API 응답 전체 JSON', style: TextStyle(fontWeight: FontWeight.bold)),
+              // Text(_rawJson ?? '없음', style: const TextStyle(fontSize: 12)),
+              // const SizedBox(height: 20),
+              // const Text('■ summary JSON', style: TextStyle(fontWeight: FontWeight.bold)),
+              // Text(_summaryJson ?? '없음', style: const TextStyle(fontSize: 12)),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget buildSliderRow(
-      String label, double value, double min, double max, Function(double) onChanged,
-      {Color color = Colors.blue}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          onChanged: onChanged,
-          activeColor: color,
-          inactiveColor: Colors.grey[300],
-        ),
-        Text('${value.toStringAsFixed(1)}°', style: const TextStyle(fontSize: 14)),
-      ],
     );
   }
 }
