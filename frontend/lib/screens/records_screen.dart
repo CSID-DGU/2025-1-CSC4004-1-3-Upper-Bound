@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'analysis1.dart';
 
 class RecordsScreen extends StatefulWidget {
-  const RecordsScreen({Key? key}) : super(key: key);
+  const RecordsScreen({super.key});
 
   @override
   _RecordsScreenState createState() => _RecordsScreenState();
@@ -78,11 +78,6 @@ class _RecordsScreenState extends State<RecordsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: _addNewRecord,
-        tooltip: '새 운동 기록 추가',
-      ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 70, 16, 16),
         itemCount: records.length,
@@ -102,7 +97,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Analysis1Page()),
+                  MaterialPageRoute(
+                      builder: (context) => const Analysis1Page()),
                 );
               },
             ),
