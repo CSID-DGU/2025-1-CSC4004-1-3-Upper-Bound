@@ -45,7 +45,6 @@ class _MainScreenState extends State<MainScreen> {
         final XFile videoFile = await _controller.stopVideoRecording();
         setState(() => _isRecording = false);
 
-
         final success = await VideoUploadService.uploadVideo(videoFile.path, currentUserId ?? '');
 
         if (!mounted) return;
@@ -69,19 +68,29 @@ class _MainScreenState extends State<MainScreen> {
       }
     } catch (e) {
       print('녹화 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('녹화 오류 발생: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('카메라 초기화 중 오류가 발생했습니다: ${snapshot.error}'),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.done) {
-            final previewSize = _controller.value.previewSize!;
+            final previewSize = _controller.value.previewSize;
+            if (previewSize == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
             final previewAspectRatio = previewSize.height / previewSize.width;
 
             return Center(
@@ -125,6 +134,4 @@ class _MainScreenState extends State<MainScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
-
-
 }

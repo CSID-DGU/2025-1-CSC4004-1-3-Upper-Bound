@@ -2,24 +2,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
 
 import 'analysis2.dart';
+import 'display_video_screen.dart'; // 영상 재생 화면 import
 
 class Analysis1Page extends StatefulWidget {
-  const Analysis1Page({Key? key}) : super(key: key);
+  final int analysisId;
+  const Analysis1Page({super.key, required this.analysisId});
 
   @override
   State<Analysis1Page> createState() => _Analysis1PageState();
 }
 
 class _Analysis1PageState extends State<Analysis1Page> {
-  VideoPlayerController? _controller;
-
   double palmMove = 95;
   double shoulderOuter = 3;
-  double shoulderInner = 75;
   double elbowAngle = 1;
+  double lowerBodyScore = 0;
+
+  int repetitionCount = 0; // 반복 횟수
+  double score = 0.0; // 총점
 
   bool _isLoading = true;
   String? _rawJson;
@@ -28,26 +30,15 @@ class _Analysis1PageState extends State<Analysis1Page> {
 
   String? userId;
 
+  // 영상 URL 리스트 (예시)
+  List<String> videoUrls = [
+    'http://43.201.78.241:3000/pushup/upload',
+  ];
+
   @override
   void initState() {
     super.initState();
-
-    _controller = VideoPlayerController.asset('assets/video.mp4')
-      ..initialize().then((_) {
-        setState(() {});
-      }).catchError((error) {
-        setState(() {
-          _error = "Video initialization error: $error";
-        });
-      });
-
     loadUserIdAndFetchData();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   Future<void> loadUserIdAndFetchData() async {
@@ -76,37 +67,172 @@ class _Analysis1PageState extends State<Analysis1Page> {
     });
 
     try {
-      final url = Uri.parse('http://43.201.78.241:3000/pushup/analytics?userId=$userId');
+      final detailUrl = Uri.parse(
+          'http://43.201.78.241:3000/pushup/analytics?analysisId=${widget.analysisId}');
+      final detailResponse = await http.get(detailUrl);
 
-      final response = await http.get(url);
+      if (detailResponse.statusCode == 200) {
+        final detailData = jsonDecode(detailResponse.body);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final summaryRaw = detailData['summary'];
+        if (summaryRaw == null) {
+          setState(() {
+            _error = 'summary 데이터가 없습니다.';
+            _isLoading = false;
+          });
+          return;
+        }
+        final summary =
+            (summaryRaw is String) ? jsonDecode(summaryRaw) : summaryRaw;
 
         setState(() {
-          _rawJson = jsonEncode(data);
-          _summaryJson = jsonEncode(data['summary']);
+          _rawJson = jsonEncode(detailData);
+          _summaryJson = jsonEncode(summary);
 
-          final summary = data['summary'];
-          palmMove = (summary['elbow_motion'] as num).toDouble();
-          shoulderOuter = (summary['shoulder_abduction'] as num).toDouble();
-          elbowAngle = (summary['elbow_flexion'] as num).toDouble();
-          shoulderInner = 75;
+          palmMove = (summary['elbow_motion'] as num?)?.toDouble() ?? 0.0;
+          shoulderOuter =
+              (summary['shoulder_abduction'] as num?)?.toDouble() ?? 0.0;
+          elbowAngle = (summary['elbow_flexion'] as num?)?.toDouble() ?? 0.0;
+          lowerBodyScore =
+              (summary['lower_body_alignment_score'] as num?)?.toDouble() ??
+                  0.0;
+
+          repetitionCount = (detailData['repetition_count'] as int?) ?? 0;
+          score = (detailData['score'] as num?)?.toDouble() ?? 0.0;
 
           _isLoading = false;
         });
       } else {
         setState(() {
-          _error = 'API error: ${response.statusCode}';
+          _error = '상세 API 에러: ${detailResponse.statusCode}';
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stacktrace) {
+      print('Fetch error 발생: $e');
+      print('Stacktrace: $stacktrace');
+
       setState(() {
         _error = 'Fetch error: $e';
         _isLoading = false;
       });
     }
+  }
+
+  // 상세 해석 가이드 함수들
+  String getPalmMoveGuide(double value) {
+    if (value < 90) {
+      return '팔꿈치를 몸에서 좀 더 벌려 공간을 확보하세요.';
+    } else if (value > 110) {
+      return '팔꿈치를 몸 쪽으로 살짝 모아 긴장을 줄이세요.';
+    } else {
+      return '팔꿈치 이동 범위가 적절합니다.';
+    }
+  }
+
+  String getShoulderOuterGuide(double value) {
+    if (value < 0) {
+      return '팔을 몸 옆으로 곧게 들어 올려 주세요.';
+    } else if (value > 150) {
+      return '팔을 들어 올릴 때 어깨가 과도하게 올라가지 않도록 조절하세요.';
+    } else {
+      return '어깨 외전 각도가 적절합니다.';
+    }
+  }
+
+  String getElbowAngleGuide(double value) {
+    if (value < 20) {
+      return '팔꿈치를 더 깊게 굽혀 가슴 쪽으로 당기세요.';
+    } else if (value > 40) {
+      return '팔꿈치 굴곡 각도를 적절히 조절하세요.';
+    } else {
+      return '팔꿈치 굴곡 범위가 적절합니다.';
+    }
+  }
+
+  Widget buildVideoList() {
+    if (videoUrls.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        const Text(
+          '촬영 영상',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: videoUrls.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final url = videoUrls[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DisplayVideoScreen(videoPath: url),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 200,
+                  color: Colors.grey[300],
+                  alignment: Alignment.center,
+                  child: Text(
+                    '영상 ${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildIndicatorCard({
+    required String title,
+    required double value,
+    required String normalRange,
+    required String guide,
+    required bool isNormal,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(
+              isNormal ? Icons.check_circle : Icons.warning,
+              color: isNormal ? Colors.green : Colors.red,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$title: ${value.toStringAsFixed(1)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text('정상 범위: $normalRange',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  Text(guide,
+                      style: TextStyle(color: Colors.grey[800], fontSize: 13)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -125,103 +251,92 @@ class _Analysis1PageState extends State<Analysis1Page> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-            ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-            : SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_controller != null && _controller!.value.isInitialized)
-                AspectRatio(
-                  aspectRatio: _controller!.value.aspectRatio,
-                  child: VideoPlayer(_controller!),
-                )
-              else
-                const Center(child: CircularProgressIndicator()),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      // 필요하면 측면분석 기능 추가
-                    },
-                    child: const Text(
-                      '측면분석',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
+                ? Center(
+                    child: Text(_error!,
+                        style: const TextStyle(color: Colors.red)))
+                : SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 10),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              '측면분석',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Analysis2Page(
+                                          analysisId: widget.analysisId)),
+                                );
+                              },
+                              child: const Text(
+                                '분석그래프',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        buildVideoList(),
+                        const SizedBox(height: 15),
+                        Text(
+                          '반복 횟수: $repetitionCount 회',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '하체 정렬 점수: ${lowerBodyScore.toStringAsFixed(1)} 점',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '총점: ${score.toStringAsFixed(1)} 점',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        buildIndicatorCard(
+                          title: '팔꿈치 이동 정도(cm)',
+                          value: palmMove,
+                          normalRange: '90 ~ 110',
+                          guide: getPalmMoveGuide(palmMove),
+                          isNormal: palmMove >= 90 && palmMove <= 110,
+                        ),
+                        buildIndicatorCard(
+                          title: '어깨 외전 각도(°)',
+                          value: shoulderOuter,
+                          normalRange: '0 ~ 150 (음수는 측정 방식 차이)',
+                          guide: getShoulderOuterGuide(shoulderOuter),
+                          isNormal: shoulderOuter >= 0 && shoulderOuter <= 150,
+                        ),
+                        buildIndicatorCard(
+                          title: '팔꿈치 굴곡 범위의 차(°)',
+                          value: elbowAngle,
+                          normalRange: '20 ~ 40',
+                          guide: getElbowAngleGuide(elbowAngle),
+                          isNormal: elbowAngle >= 20 && elbowAngle <= 40,
+                        ),
+                        const SizedBox(height: 30),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Analysis2Page()),
-                      );
-                    },
-                    child: const Text(
-                      '정면분석',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              buildSliderRow('팔꿈치 이동 정도(cm)', palmMove, 90, 110, (value) {
-                setState(() {
-                  palmMove = value;
-                });
-              }),
-              buildSliderRow('어깨 외전 각도(°)', shoulderOuter, 0, 50, (value) {
-                setState(() {
-                  shoulderOuter = value;
-                });
-              }, color: Colors.red),
-              buildSliderRow('어깨 내전 각도(°)', shoulderInner, 60, 90, (value) {
-                setState(() {
-                  shoulderInner = value;
-                });
-              }, color: Colors.red),
-              buildSliderRow('팔꿈치 굴곡 범위의 차(°)', elbowAngle, 0, 110, (value) {
-                setState(() {
-                  elbowAngle = value;
-                });
-              }),
-              const SizedBox(height: 30),
-              const Text('■ API 응답 전체 JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(_rawJson ?? '없음', style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 20),
-              const Text('■ summary JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(_summaryJson ?? '없음', style: const TextStyle(fontSize: 12)),
-            ],
-          ),
-        ),
       ),
-    );
-  }
-
-  Widget buildSliderRow(
-      String label, double value, double min, double max, Function(double) onChanged,
-      {Color color = Colors.blue}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          onChanged: onChanged,
-          activeColor: color,
-          inactiveColor: Colors.grey[300],
-        ),
-        Text('${value.toStringAsFixed(1)}°', style: const TextStyle(fontSize: 14)),
-      ],
     );
   }
 }
