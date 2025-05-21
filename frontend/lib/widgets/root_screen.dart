@@ -55,4 +55,3 @@ class _RootScreenState extends State<RootScreen> {
     );
   }
 }
-

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../globals/auth_user.dart';
 
 class AuthService {
   static const String baseUrl = 'http://43.201.78.241:3000';
@@ -21,7 +20,6 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         print('로그인 성공: ${responseData['message']}');
-        currentUserId = userId;
         return true;
       } else {
         print('로그인 실패: ${response.body}');

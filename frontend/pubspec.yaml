@@ -13,6 +13,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   camera: ^0.10.5+9
   video_player: ^2.7.0
+  shared_preferences: ^2.0.15
+
 
 dev_dependencies:
   flutter_test:
