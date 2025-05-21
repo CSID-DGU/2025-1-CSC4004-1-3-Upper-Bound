@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'analysis1.dart';
 
 class RecordsScreen extends StatefulWidget {
@@ -10,6 +11,27 @@ class RecordsScreen extends StatefulWidget {
 
 class _RecordsScreenState extends State<RecordsScreen> {
   List<String> records = ['운동기록 1'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecords();
+  }
+
+  Future<void> _loadRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedRecords = prefs.getStringList('records');
+    if (savedRecords != null && savedRecords.isNotEmpty) {
+      setState(() {
+        records = savedRecords;
+      });
+    }
+  }
+
+  Future<void> _saveRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('records', records);
+  }
 
   Future<void> _editRecordDialog(int index) async {
     final controller = TextEditingController(text: records[index]);
@@ -42,6 +64,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
       setState(() {
         records[index] = result.trim();
       });
+      await _saveRecords(); // 저장
     }
   }
 
@@ -49,6 +72,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
     setState(() {
       records.add('운동기록 ${records.length + 1}');
     });
+    _saveRecords(); // 저장
   }
 
   @override

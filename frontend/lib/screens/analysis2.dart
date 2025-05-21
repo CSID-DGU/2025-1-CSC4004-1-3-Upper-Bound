@@ -91,7 +91,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Elbow Y Motion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('팔꿈치 상하 움직임', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -113,7 +113,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Elbow Flexion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('팔꿈치 굽힘 각도', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -135,7 +135,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Lower Body Angle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('하체 각도', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
