@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,9 +19,6 @@ class _LoginPageState extends State<LoginPage> {
     final result = await AuthService.login(id, password);
 
     if (result == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', id);  // 로그인 성공 시 id 저장
-
       Navigator.pushReplacementNamed(context, '/root');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
