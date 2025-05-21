@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'analysis1.dart'; // Analysis1Page import
+import 'analysis1.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({Key? key}) : super(key: key);
@@ -9,25 +9,72 @@ class RecordsScreen extends StatefulWidget {
 }
 
 class _RecordsScreenState extends State<RecordsScreen> {
-  // 운동 기록 개수 예시 (실제론 DB/API 연동 가능)
-  final int recordCount = 10;
+  List<String> records = ['운동기록 1'];
+
+  Future<void> _editRecordDialog(int index) async {
+    final controller = TextEditingController(text: records[index]);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('기록 이름 수정'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: '새 이름을 입력하세요'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, controller.text);
+            },
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.trim().isNotEmpty) {
+      setState(() {
+        records[index] = result.trim();
+      });
+    }
+  }
+
+  void _addNewRecord() {
+    setState(() {
+      records.add('운동기록 ${records.length + 1}');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: _addNewRecord,
+        tooltip: '새 운동 기록 추가',
+      ),
       body: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 70, 16, 16), // 두번째꺼 수정 가능
-        itemCount: recordCount,
+        padding: const EdgeInsets.fromLTRB(16, 70, 16, 16),
+        itemCount: records.length,
         itemBuilder: (context, index) {
-          final recordNum = index + 1;
+          final title = records[index];
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
               title: Text(
-                '운동기록 $recordNum',
+                title,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _editRecordDialog(index),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
