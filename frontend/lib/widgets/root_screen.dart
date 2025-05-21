@@ -48,7 +48,7 @@ class _RootScreenState extends State<RootScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(icon: Icon(Icons.videocam), label: '메인 기능'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '월별 기록'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '운동 기록'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '내 정보'),
         ],
       ),

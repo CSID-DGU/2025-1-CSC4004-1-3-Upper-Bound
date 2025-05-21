@@ -15,24 +15,23 @@ class _RecordsScreenState extends State<RecordsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text('운동 기록'),
-      ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 70, 16, 16), // 두번째꺼 수정 가능
         itemCount: recordCount,
         itemBuilder: (context, index) {
           final recordNum = index + 1;
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
-              title: Text('운동기록 $recordNum', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                '운동기록 $recordNum',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Analysis1Page()),
+                  MaterialPageRoute(builder: (context) => const Analysis1Page()),
                 );
               },
             ),

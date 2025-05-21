@@ -128,7 +128,13 @@ class _Analysis1PageState extends State<Analysis1Page> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$label : ${value.toStringAsFixed(1)}'),
+        Text(
+          '$label : ${value.toStringAsFixed(1)}',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: color,
@@ -143,6 +149,16 @@ class _Analysis1PageState extends State<Analysis1Page> {
               max: max,
               onChanged: (v) {},
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(min.toStringAsFixed(0)),
+              Text(max.toStringAsFixed(0)),
+            ],
           ),
         ),
       ],
@@ -171,9 +187,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              // 기존 코드 중 build 메서드 안쪽 Row 부분만 교체
               Row(
-                crossAxisAlignment: CrossAxisAlignment.end, // 높이 맞춤
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Text(
                     '측면분석',
@@ -208,11 +223,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
               buildFixedColorSliderRow('팔꿈치 굴곡 범위의 차(°)', elbowAngle, 0, 110),
               buildFixedColorSliderRow('하체 정렬 점수(점)', lowerBodyScore, 0, 100, color: Colors.blue),
               const SizedBox(height: 30),
-              // const Text('■ API 응답 전체 JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              // Text(_rawJson ?? '없음', style: const TextStyle(fontSize: 12)),
-              // const SizedBox(height: 20),
-              // const Text('■ summary JSON', style: TextStyle(fontWeight: FontWeight.bold)),
-              // Text(_summaryJson ?? '없음', style: const TextStyle(fontSize: 12)),
             ],
           ),
         ),

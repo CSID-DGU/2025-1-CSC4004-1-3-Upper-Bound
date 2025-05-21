@@ -70,7 +70,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                     );
                   },
                   child: const Text(
-                    '분석그래프',
+                    '측면분석',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.normal,
@@ -80,7 +80,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  '정면분석',
+                  '분석그래프',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
