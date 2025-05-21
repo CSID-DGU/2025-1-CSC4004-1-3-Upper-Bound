@@ -171,19 +171,16 @@ class _Analysis1PageState extends State<Analysis1Page> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
+              // 기존 코드 중 build 메서드 안쪽 Row 부분만 교체
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end, // 높이 맞춤
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      // 측면분석 기능 연결 가능
-                    },
-                    child: const Text(
-                      '측면분석',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const Text(
+                    '측면분석',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -195,10 +192,11 @@ class _Analysis1PageState extends State<Analysis1Page> {
                       );
                     },
                     child: const Text(
-                      '정면분석',
+                      '분석그래프',
                       style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.normal,
                         color: Colors.grey,
-                        fontSize: 14,
                       ),
                     ),
                   ),

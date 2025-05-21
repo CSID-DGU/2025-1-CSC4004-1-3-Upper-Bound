@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 
+import 'analysis1.dart';
+
 class Analysis2Page extends StatefulWidget {
   const Analysis2Page({Key? key}) : super(key: key);
 
@@ -41,15 +43,55 @@ class _Analysis2PageState extends State<Analysis2Page> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Analysis 2')),
+      appBar: AppBar(
+        toolbarHeight: 80,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Elbow Y Motion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Analysis1Page()),
+                    );
+                  },
+                  child: const Text(
+                    '분석그래프',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  '정면분석',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text('Elbow Y Motion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             SizedBox(
               height: 300,
               child: LineChart(
@@ -61,7 +103,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                     LineChartBarData(
                       spots: elbowY.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                       isCurved: true,
-                      colors: [Colors.blue],
+                      color: Colors.blue,
                       dotData: FlDotData(show: false),
                       belowBarData: BarAreaData(show: false),
                     ),
@@ -69,9 +111,9 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
-            Text('Elbow Flexion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const SizedBox(height: 20),
+            const Text('Elbow Flexion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             SizedBox(
               height: 300,
               child: LineChart(
@@ -83,7 +125,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                     LineChartBarData(
                       spots: elbowFlexion.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                       isCurved: true,
-                      colors: [Colors.green],
+                      color: Colors.green,
                       dotData: FlDotData(show: false),
                       belowBarData: BarAreaData(show: false),
                     ),
@@ -91,9 +133,9 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
-            Text('Lower Body Angle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const SizedBox(height: 20),
+            const Text('Lower Body Angle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             SizedBox(
               height: 300,
               child: LineChart(
@@ -105,7 +147,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                     LineChartBarData(
                       spots: lowerBodyAngle.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                       isCurved: true,
-                      colors: [Colors.orange],
+                      color: Colors.orange,
                       dotData: FlDotData(show: false),
                       belowBarData: BarAreaData(show: false),
                     ),
