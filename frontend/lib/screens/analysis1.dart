@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'analysis2.dart';
+import 'display_video_screen.dart'; // 영상 재생 화면 import
 
 class Analysis1Page extends StatefulWidget {
   const Analysis1Page({Key? key}) : super(key: key);
@@ -25,10 +26,17 @@ class _Analysis1PageState extends State<Analysis1Page> {
 
   String? userId;
 
+  // 영상 URL 리스트 (예시 — 실제 API 호출 후 갱신 가능)
+  List<String> videoUrls = [
+    'http://example.com/video1.mp4',
+    'http://example.com/video2.mp4',
+  ];
+
   @override
   void initState() {
     super.initState();
     loadUserIdAndFetchData();
+    // 실제 영상 리스트 API 호출해서 videoUrls 갱신하면 됨
   }
 
   Future<void> loadUserIdAndFetchData() async {
@@ -124,6 +132,52 @@ class _Analysis1PageState extends State<Analysis1Page> {
     }
   }
 
+  Widget buildVideoList() {
+    if (videoUrls.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        const Text(
+          '촬영 영상',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: videoUrls.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final url = videoUrls[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DisplayVideoScreen(videoPath: url),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 200,
+                  color: Colors.grey[300],
+                  alignment: Alignment.center,
+                  child: Text(
+                    '영상 ${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget buildFixedColorSliderRow(String label, double value, double min, double max, {Color color = Colors.blue}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,6 +271,10 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   ),
                 ],
               ),
+
+              // 영상 리스트
+              buildVideoList(),
+
               const SizedBox(height: 10),
               buildFixedColorSliderRow('팔꿈치 이동 정도(cm)', palmMove, 90, 110),
               buildFixedColorSliderRow('어깨 외전 각도(°)', shoulderOuter, -100, 100, color: Colors.blue),

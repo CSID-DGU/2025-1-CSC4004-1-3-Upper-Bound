@@ -55,107 +55,109 @@ class _Analysis2PageState extends State<Analysis2Page> {
         padding: const EdgeInsets.all(16.0),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Analysis1Page()),
-                    );
-                  },
-                  child: const Text(
-                    '측면분석',
+            : SingleChildScrollView( // 스크롤 추가
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Analysis1Page()),
+                      );
+                    },
+                    child: const Text(
+                      '측면분석',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.normal,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    '분석그래프',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  '분석그래프',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text('Elbow Y Motion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 300,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: true),
+                    titlesData: FlTitlesData(show: true),
+                    borderData: FlBorderData(show: true),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: elbowY.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                        isCurved: true,
+                        color: Colors.blue,
+                        dotData: FlDotData(show: false),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text('Elbow Y Motion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 300,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(show: true),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: elbowY.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                      isCurved: true,
-                      color: Colors.blue,
-                      dotData: FlDotData(show: false),
-                      belowBarData: BarAreaData(show: false),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 20),
+              const Text('Elbow Flexion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 300,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: true),
+                    titlesData: FlTitlesData(show: true),
+                    borderData: FlBorderData(show: true),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: elbowFlexion.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                        isCurved: true,
+                        color: Colors.green,
+                        dotData: FlDotData(show: false),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text('Elbow Flexion', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 300,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(show: true),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: elbowFlexion.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                      isCurved: true,
-                      color: Colors.green,
-                      dotData: FlDotData(show: false),
-                      belowBarData: BarAreaData(show: false),
-                    ),
-                  ],
+              const SizedBox(height: 20),
+              const Text('Lower Body Angle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 300,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: true),
+                    titlesData: FlTitlesData(show: true),
+                    borderData: FlBorderData(show: true),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: lowerBodyAngle.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                        isCurved: true,
+                        color: Colors.orange,
+                        dotData: FlDotData(show: false),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text('Lower Body Angle', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 300,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(show: true),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: lowerBodyAngle.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                      isCurved: true,
-                      color: Colors.orange,
-                      dotData: FlDotData(show: false),
-                      belowBarData: BarAreaData(show: false),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
