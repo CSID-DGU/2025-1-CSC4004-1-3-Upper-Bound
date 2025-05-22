@@ -13,7 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   camera: ^0.10.5+9
   video_player: ^2.7.0
-  shared_preferences: ^2.0.15
+  shared_preferences: ^2.1.0
   permission_handler: ^11.0.1
   fl_chart: ^0.66.0
 

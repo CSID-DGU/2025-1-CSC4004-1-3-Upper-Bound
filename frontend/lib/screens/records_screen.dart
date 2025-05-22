@@ -1,44 +1,78 @@
 import 'package:flutter/material.dart';
-import 'analysis1.dart'; // Analysis1Page import
+import 'package:frontend/screens/analysis1.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RecordsScreen extends StatefulWidget {
-  const RecordsScreen({Key? key}) : super(key: key);
+  const RecordsScreen({super.key});
 
   @override
   _RecordsScreenState createState() => _RecordsScreenState();
 }
 
 class _RecordsScreenState extends State<RecordsScreen> {
-  // 운동 기록 개수 예시 (실제론 DB/API 연동 가능)
-  final int recordCount = 10;
+  List<dynamic> records = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecords();
+  }
+
+  Future<void> _fetchRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final listUrl =
+        Uri.parse('http://43.201.78.241:3000/pushup/analytics?userId=$userId');
+
+    try {
+      final response = await http.get(listUrl);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          records = data;
+        });
+      } else {
+        debugPrint('서버 응답 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('요청 실패: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text('운동 기록'),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: recordCount,
-        itemBuilder: (context, index) {
-          final recordNum = index + 1;
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              title: Text('운동기록 $recordNum', style: const TextStyle(fontWeight: FontWeight.bold)),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Analysis1Page()),
+      appBar: AppBar(title: const Text("운동 기록")),
+      body: records.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              itemCount: records.length,
+              itemBuilder: (context, index) {
+                final record = records[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    title: Text(
+                      "점수: ${record['score']} | 반복: ${record['repetition_count']}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("날짜: ${record['createdAt']}"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Analysis1Page(
+                                analysisId: int.parse(record['id']))),
+                      );
+                    },
+                  ),
                 );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }
