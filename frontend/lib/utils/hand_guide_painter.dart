@@ -19,7 +19,6 @@ class HandGuidePainter extends CustomPainter {
     );
 
     canvas.drawOval(rect, paint);
-    canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
   }
 
   @override
