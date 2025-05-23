@@ -26,8 +26,8 @@ class _Analysis2PageState extends State<Analysis2Page> {
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(
-        Uri.parse('http://43.201.78.241:3000/pushup/analytics?analysisId=2'));
+    final response = await http.get(Uri.parse(
+        'http://43.201.78.241:3000/pushup/analytics?analysisId=${widget.analysisId}'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
