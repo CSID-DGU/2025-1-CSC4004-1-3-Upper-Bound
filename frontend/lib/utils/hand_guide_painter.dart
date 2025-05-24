@@ -8,10 +8,8 @@ class HandGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
-    // 타원의 중심 위치
     final center = Offset(size.width * 0.25, size.height * 0.5);
 
-    // 타원의 사각형 영역 (Rect)
     final rect = Rect.fromCenter(
       center: center,
       width: size.width * 0.07,
@@ -19,6 +17,19 @@ class HandGuidePainter extends CustomPainter {
     );
 
     canvas.drawOval(rect, paint);
+
+    final offsetX = size.width * 0.07;
+    final leftX = center.dx + offsetX;
+    final rightX = center.dx + offsetX;
+
+    final lineTopX = center.dy - size.height * 0.45;
+    final lineBottomX = center.dy + size.height * -0.4;
+
+    final lineTopY = center.dy - size.height * -0.45;
+    final lineBottomY = center.dy + size.height * 0.4;
+
+    canvas.drawLine(Offset(leftX, lineTopX), Offset(leftX, lineBottomX), paint);
+    canvas.drawLine(Offset(rightX, lineTopY), Offset(rightX, lineBottomY), paint);
   }
 
   @override
