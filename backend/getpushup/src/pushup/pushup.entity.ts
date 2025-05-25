@@ -1,6 +1,6 @@
 
 export class PushupAnalysis {
-  id: string;
+  id: String;
   userId: String;
   createdAt: Date;
   repetition_count: number;

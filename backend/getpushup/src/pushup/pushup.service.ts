@@ -5,6 +5,10 @@ import { PushupAnalysis } from './pushup.entity';
 export class PushupService {
   private analyses: PushupAnalysis[] = [];
 
+  getAnalysesLength(): number {
+    return this.analyses.length;
+  }
+
   async analyzePushup(body: any, userId : String) {
     const id = String(this.analyses.length);
     const result: PushupAnalysis = {

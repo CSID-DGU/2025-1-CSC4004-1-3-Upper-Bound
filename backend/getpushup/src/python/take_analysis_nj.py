@@ -61,7 +61,7 @@ LEFT_TOE = 31
 
 
 
-def detect_and_display(video_path): # landmark 추출
+def detect_and_display(video_path, analysisId): # landmark 추출
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
@@ -72,8 +72,11 @@ def detect_and_display(video_path): # landmark 추출
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
-    # out = cv2.VideoWriter('output_pose.mp4', fourcc, fps, (width, height))
+
+    output_dir = '../output_video/'
+    os.makedirs(output_dir, exist_ok=True)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
+    out = cv2.VideoWriter(output_dir+f'output{analysisId}.mp4', fourcc, fps, (width, height))
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
 
@@ -131,8 +134,8 @@ def detect_and_display(video_path): # landmark 추출
         landmark_list.append(row)
 
         #실시간 영상 보여주기
-        #cv2.imshow('Pose Detection', image)
-        # out.write(image)
+        cv2.imshow('Pose Detection', image)
+        out.write(image)
         frame_idx += 1
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -141,7 +144,7 @@ def detect_and_display(video_path): # landmark 추출
     landmark_array = np.array(landmark_list)
     #print("Shape:", landmark_array.shape)
     #print("First 3 frames:\n", landmark_array[:3, :])
-    # out.release()
+    out.release()
     cap.release()
     
     cv2.destroyAllWindows()
@@ -326,6 +329,7 @@ if __name__ == "__main__":
     else:
         #video_path = os.path.join(os.getcwd(), "wide0.mp4")
         video_path = sys.argv[1]
-        detect_and_display(video_path)
+        analysisId = sys.argv[2]
+        detect_and_display(video_path, analysisId)
         analysis()
         #plot_joint_angles()
