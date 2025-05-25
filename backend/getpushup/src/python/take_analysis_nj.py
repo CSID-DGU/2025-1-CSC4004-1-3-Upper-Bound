@@ -58,7 +58,19 @@ LEFT_KNEE = 25
 LEFT_ANKLE = 27
 LEFT_HEEL = 29
 LEFT_TOE = 31
-
+RIGHT_BODY_PARTS = {
+    # mp_pose.PoseLandmark.RIGHT_SHOULDER,
+    mp_pose.PoseLandmark.RIGHT_ELBOW,
+    mp_pose.PoseLandmark.RIGHT_WRIST,
+    # mp_pose.PoseLandmark.RIGHT_HIP,
+    mp_pose.PoseLandmark.RIGHT_KNEE,
+    mp_pose.PoseLandmark.RIGHT_ANKLE,
+    mp_pose.PoseLandmark.RIGHT_FOOT_INDEX,
+    mp_pose.PoseLandmark.RIGHT_HEEL,
+    mp_pose.PoseLandmark.RIGHT_PINKY,
+    mp_pose.PoseLandmark.RIGHT_INDEX,
+    mp_pose.PoseLandmark.RIGHT_THUMB,
+}
 
 
 def detect_and_display(video_path, analysisId): # landmark 추출
@@ -95,7 +107,12 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) # 다시 BGR로 변환
 
         row = [frame_idx]  # 현재 프레임 번호
-
+        
+        for idx in RIGHT_BODY_PARTS:
+            results.pose_landmarks.landmark[idx].x = 0.0
+            results.pose_landmarks.landmark[idx].y = 0.0
+            results.pose_landmarks.landmark[idx].z = 0.0
+            results.pose_landmarks.landmark[idx].visibility = 0.0
         if results.pose_landmarks: # 포즈가 감지된 경우
             # landmark 그리기
             mp_drawing.draw_landmarks( 
@@ -146,7 +163,6 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     #print("First 3 frames:\n", landmark_array[:3, :])
     out.release()
     cap.release()
-    
     cv2.destroyAllWindows()
 
 def calculate_angle(a, b, c):
