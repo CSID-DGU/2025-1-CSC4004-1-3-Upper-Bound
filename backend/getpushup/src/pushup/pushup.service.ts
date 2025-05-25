@@ -47,6 +47,15 @@ export class PushupService {
       }));
     }
 
+  getAllAnalysesSummary() {
+    return this.analyses
+    .map(({id, userId, summary}) => ({
+      id,
+      userId,
+      summary,
+    }));
+  }   // 모든 분석 결과 한번에 보기 위해 추가
+
   getAllAnalysesByUser(userId: String) {
   return this.analyses
     .filter(a => a.userId === userId)
