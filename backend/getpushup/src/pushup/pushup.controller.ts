@@ -41,13 +41,14 @@ export class PushupController {
     if (!body.userId) {
       throw new BadRequestException('userId는 필수입니다.');
     }
+    const analysisId = String(this.pushupService.getAnalysesLength());
     const videoPath = file.path;
     const execPromise = util.promisify(exec);
     //const pythonPath = '/Users/seohanyu/Documents/GitHub/DGUopenSW/2025-1-CSC4004-1-3-Upper-Bound/ai/aipy/bin/python';
     //const pythonPath = 'C:/Users/wsm02/OSS-Project/aipy/Scripts/python';
     const pythonPath = '/usr/bin/python3.10'    // python 3.10버전으로 실행(서버용)
     try {
-      const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}"`);
+      const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}" "${analysisId}"`);
       if (stderr) { 
         console.error('Python error:', stderr);
       }
