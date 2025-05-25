@@ -108,12 +108,13 @@ def detect_and_display(video_path, analysisId): # landmark 추출
 
         row = [frame_idx]  # 현재 프레임 번호
         
-        for idx in RIGHT_BODY_PARTS:
-            results.pose_landmarks.landmark[idx].x = 0.0
-            results.pose_landmarks.landmark[idx].y = 0.0
-            results.pose_landmarks.landmark[idx].z = 0.0
-            results.pose_landmarks.landmark[idx].visibility = 0.0
+
         if results.pose_landmarks: # 포즈가 감지된 경우
+            for idx in RIGHT_BODY_PARTS:
+                results.pose_landmarks.landmark[idx].x = 0.0
+                results.pose_landmarks.landmark[idx].y = 0.0
+                results.pose_landmarks.landmark[idx].z = 0.0
+                results.pose_landmarks.landmark[idx].visibility = 0.0
             # landmark 그리기
             mp_drawing.draw_landmarks( 
                 image,
@@ -149,11 +150,18 @@ def detect_and_display(video_path, analysisId): # landmark 추출
                 row.extend([0.0] * 33 * 4)
 
         landmark_list.append(row)
-
         #실시간 영상 보여주기
         cv2.imshow('Pose Detection', image)
         out.write(image)
         frame_idx += 1
+
+        #푸시업 종료시 -> 영상 종료
+        # shoulder = get_coord(row, LEFT_SHOULDER)
+        # hip = get_coord(row, LEFT_HIP)
+        # knee = get_coord(row, LEFT_KNEE)
+        # hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
+        # if hip_angle < 100:
+        #     break
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -175,7 +183,11 @@ def calculate_angle(a, b, c):
     bc = c - b
 
     # 코사인 각도 계산
-    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    denom = np.linalg.norm(ba) * np.linalg.norm(bc)
+    if denom == 0:
+        cosine_angle = 0.0
+    else:
+        cosine_angle = np.dot(ba, bc) / denom
     angle = np.arccos(cosine_angle)  # 라디안
     return np.degrees(angle)  # degree로 변환
 
@@ -279,6 +291,9 @@ def analysis():
     "elbow_rom_timeline": smooth_elbow.tolist(),
     "lower_alignment_timline": lower_body_alignment,
     }
+    for k, v in result.items():
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+            result[k] = 0.0
     print(json.dumps(result))
 
         
@@ -319,7 +334,8 @@ def plot_joint_angles():
     plt.grid(True)
 
     plt.subplot(2, 2, 4)
-    plt.plot(frames, lower_body_alignment, color='green')
+    #plt.plot(frames, lower_body_alignment, color='green')
+    plt.plot(frames,hip_angles , color='green')
     plt.xlabel("Frame")
     plt.ylabel("Angle (°)")
     plt.title("Lowbody Aligment")
@@ -348,4 +364,4 @@ if __name__ == "__main__":
         analysisId = sys.argv[2]
         detect_and_display(video_path, analysisId)
         analysis()
-        #plot_joint_angles()
+        plot_joint_angles()
