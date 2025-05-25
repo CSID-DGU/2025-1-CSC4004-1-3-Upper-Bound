@@ -75,7 +75,6 @@ RIGHT_BODY_PARTS = {
 
 def detect_and_display(video_path, analysisId): # landmark 추출
     cap = cv2.VideoCapture(video_path)
-
     if not cap.isOpened():
         error = {"error": f"Cannot open video {video_path}"}
         print(json.dumps(error))
@@ -84,6 +83,10 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
+    # 세로 영상이면 회전
+    rotate = height > width
+    if rotate:
+        width, height = height, width
 
     output_dir = '../output_video/'
     os.makedirs(output_dir, exist_ok=True)
@@ -97,6 +100,9 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         if not success:
             #print("End of video.")
             break
+        
+        if rotate:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         # BGR(기본 OpenCV 포맷) → RGB (MediaPipe는 RGB 사용)
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -156,12 +162,12 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         frame_idx += 1
 
         #푸시업 종료시 -> 영상 종료
-        # shoulder = get_coord(row, LEFT_SHOULDER)
-        # hip = get_coord(row, LEFT_HIP)
-        # knee = get_coord(row, LEFT_KNEE)
-        # hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
-        # if hip_angle < 100:
-        #     break
+        shoulder = get_coord(row, LEFT_SHOULDER)
+        hip = get_coord(row, LEFT_HIP)
+        knee = get_coord(row, LEFT_KNEE)
+        hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
+        if hip_angle < 100:
+            break
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -364,4 +370,4 @@ if __name__ == "__main__":
         analysisId = sys.argv[2]
         detect_and_display(video_path, analysisId)
         analysis()
-        plot_joint_angles()
+        #plot_joint_angles()
