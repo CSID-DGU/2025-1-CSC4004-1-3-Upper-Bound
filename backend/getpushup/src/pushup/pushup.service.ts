@@ -5,6 +5,10 @@ import { PushupAnalysis } from './pushup.entity';
 export class PushupService {
   private analyses: PushupAnalysis[] = [];
 
+  getAnalysesLength(): number {
+    return this.analyses.length;
+  }
+
   async analyzePushup(body: any, userId : String) {
     const id = String(this.analyses.length);
     const result: PushupAnalysis = {
@@ -42,6 +46,15 @@ export class PushupService {
         score,
       }));
     }
+
+  getAllAnalysesSummary() {
+    return this.analyses
+    .map(({id, userId, summary}) => ({
+      id,
+      userId,
+      summary,
+    }));
+  }   // 모든 분석 결과 한번에 보기 위해 추가
 
   getAllAnalysesByUser(userId: String) {
   return this.analyses
