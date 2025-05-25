@@ -100,7 +100,7 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         if not success:
             #print("End of video.")
             break
-        
+
         if rotate:
             frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
@@ -157,7 +157,7 @@ def detect_and_display(video_path, analysisId): # landmark 추출
 
         landmark_list.append(row)
         #실시간 영상 보여주기
-        cv2.imshow('Pose Detection', image)
+        # cv2.imshow('Pose Detection', image)
         out.write(image)
         frame_idx += 1
 

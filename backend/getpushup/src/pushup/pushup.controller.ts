@@ -44,8 +44,8 @@ export class PushupController {
     const analysisId = String(this.pushupService.getAnalysesLength());
     const videoPath = file.path;
     const execPromise = util.promisify(exec);
-    const pythonPath = '/Users/seohanyu/Documents/GitHub/DGUopenSW/2025-1-CSC4004-1-3-Upper-Bound/ai/aipy/bin/python';
-    // const pythonPath = 'python'
+    //const pythonPath = '/Users/seohanyu/Documents/GitHub/DGUopenSW/2025-1-CSC4004-1-3-Upper-Bound/ai/aipy/bin/python';
+     const pythonPath = 'python'
     try {
       const { stdout, stderr } = await execPromise(`${pythonPath} src/python/take_analysis_nj.py "${videoPath}" "${analysisId}"`);
       if (stderr) { 
