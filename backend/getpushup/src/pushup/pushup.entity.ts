@@ -1,5 +1,7 @@
+
 export class PushupAnalysis {
-  id: string;
+  id: String;
+  userId: String;
   createdAt: Date;
   repetition_count: number;
   score: number;
@@ -17,5 +19,4 @@ export class PushupAnalysis {
     lower_body_angle: number[];
   };
 
-  userId: number;
 }

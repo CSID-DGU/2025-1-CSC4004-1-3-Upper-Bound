@@ -5,24 +5,18 @@ import { PushupAnalysis } from './pushup.entity';
 export class PushupService {
   private analyses: PushupAnalysis[] = [];
 
-  async calibrate(file: any) {
-    return {
-      upper_arm_length: 33.4,
-      forearm_length: 27.8,
-      filename: file.originalname,
-    };
+  getAnalysesLength(): number {
+    return this.analyses.length;
   }
 
-  async analyzePushup(body: any) {
-    const userId = Number(body.userId);
-
-    const id = Date.now().toString(); // 임시 ID
-
+  async analyzePushup(body: any, userId : String) {
+    const id = String(this.analyses.length);
     const result: PushupAnalysis = {
       id,
+      userId: userId,
       createdAt: new Date(),
-      repetition_count: 10,
-      score: 87.2,
+      repetition_count: body.pushup_count,
+      score: body.total_score,
       summary: {
         elbow_motion: body.elbow_alignment,
         shoulder_abduction: body.abduction_angle,
@@ -34,7 +28,6 @@ export class PushupService {
         elbow_flexion: body.elbow_rom_timeline,
         lower_body_angle: body.lower_alignment_timline,
       },
-      userId,
     };
 
     this.analyses.push(result);
@@ -44,40 +37,51 @@ export class PushupService {
     };
   }
 
-  getAllAnalysesByUser(userId: number) {
+  getAllAnalyses() {
+    return this.analyses
+      .map(({ id, createdAt, repetition_count, score }) => ({
+        id,
+        createdAt,
+        repetition_count,
+        score,
+      }));
+    }
+
+  getAllAnalysesSummary() {
+    return this.analyses
+    .map(({id, userId, summary}) => ({
+      id,
+      userId,
+      summary,
+    }));
+  }   // 모든 분석 결과 한번에 보기 위해 추가
+
+  getAllAnalysesByUser(userId: String) {
   return this.analyses
     .filter(a => a.userId === userId)
     .map(({ id, createdAt, repetition_count, score }) => ({
       id,
+      userId,
       createdAt,
       repetition_count,
       score,
     }));
   }
 
-  getAnalysisByIdForUser(id: string, userId: number) {
-  const analysis = this.analyses.find((a) => a.id === id);
+  getAnalysisById(analysisId: String) {
+  const analysis = this.analyses.find((a) => a.id === analysisId);
 
   if (!analysis) {
     throw new NotFoundException('해당 분석 결과를 찾을 수 없습니다.');
   }
-
-  if (analysis.userId !== userId) {
-    throw new ForbiddenException('접근 권한이 없습니다.');
-  }
-
   return analysis;
   }
 
-  deleteAnalysisById(id: string, userId: number) {
-  const index = this.analyses.findIndex(a => a.id === id);
+  deleteAnalysisById(analysisId: string) {
+  const index = this.analyses.findIndex(a => a.id === analysisId);
 
   if (index === -1) {
     throw new NotFoundException('분석 결과를 찾을 수 없습니다.');
-  }
-
-  if (this.analyses[index].userId !== userId) {
-    throw new ForbiddenException('삭제 권한이 없습니다.');
   }
 
   this.analyses.splice(index, 1);
