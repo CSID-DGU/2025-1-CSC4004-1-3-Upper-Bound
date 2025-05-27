@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../screens/home_screen.dart';
 import '../screens/main_screen.dart';
 import '../screens/records_screen.dart';
-import '../screens/profile_screen.dart';
 
 class RootScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -22,10 +20,8 @@ class _RootScreenState extends State<RootScreen> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(),
       MainScreen(camera: widget.camera),
       RecordsScreen(),
-      ProfileScreen(),
     ];
   }
 
@@ -46,10 +42,8 @@ class _RootScreenState extends State<RootScreen> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           BottomNavigationBarItem(icon: Icon(Icons.videocam), label: '메인 기능'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '운동 기록'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '내 정보'),
         ],
       ),
     );

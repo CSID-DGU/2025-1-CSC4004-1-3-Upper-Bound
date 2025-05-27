@@ -46,9 +46,23 @@ class _RecordsScreenState extends State<RecordsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("운동 기록")),
-      body: records.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
+      body: FutureBuilder(
+        future: Future.value(records), // records가 갱신된 상태에서 반영되도록 함
+        builder: (context, snapshot) {
+          if (records.isEmpty && snapshot.connectionState != ConnectionState.done) {
+            // 로딩 중
+            return const Center(child: CircularProgressIndicator());
+          } else if (records.isEmpty && snapshot.connectionState == ConnectionState.done) {
+            // 로딩 끝났지만 데이터 없음
+            return const Center(
+              child: Text(
+                '운동 기록이 없습니다.',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            );
+          } else {
+            // 데이터 있음
+            return ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               itemCount: records.length,
               itemBuilder: (context, index) {
@@ -65,14 +79,19 @@ class _RecordsScreenState extends State<RecordsScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => Analysis1Page(
-                                analysisId: int.parse(record['id']))),
+                          builder: (context) => Analysis1Page(
+                            analysisId: int.parse(record['id']),
+                          ),
+                        ),
                       );
                     },
                   ),
                 );
               },
-            ),
+            );
+          }
+        },
+      ),
     );
   }
 }
