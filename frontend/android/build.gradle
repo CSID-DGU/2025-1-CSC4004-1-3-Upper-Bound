@@ -1,10 +1,13 @@
 buildscript {
+    ext.kotlin_version = '1.8.22'  // Kotlin 버전 정의
+
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.0'
+        classpath 'com.android.tools.build:gradle:8.3.0' // Android Gradle Plugin 버전
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // Kotlin Gradle Plugin 추가
     }
 }
 
@@ -16,9 +19,11 @@ allprojects {
 }
 
 rootProject.buildDir = "../build"
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

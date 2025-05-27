@@ -29,10 +29,10 @@ packages:
     dependency: transitive
     description:
       name: camera_android
-      sha256: "007c57cdcace4751014071e3d42f2eb8a64a519254abed35b714223d81d66234"
+      sha256: "08808be7e26fc3c7426c81b3fa387564b8e9c22e6fe9cb5675ce3ab7017d8203"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.10"
+    version: "0.10.10+3"
   camera_avfoundation:
     dependency: transitive
     description:
@@ -125,10 +125,10 @@ packages:
     dependency: transitive
     description:
       name: ffi
-      sha256: "16ed7b077ef01ad6170a3d0c57caa4a112a38d7a2ed5602e0aca9ca6f3d98da6"
+      sha256: "289279317b4b16eb2bb7e271abccd4bf84ec9bdcbe999e278a94b804f5630418"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.3"
+    version: "2.1.4"
   file:
     dependency: transitive
     description:
@@ -162,10 +162,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: "1c2b787f99bdca1f3718543f81d38aa1b124817dfeb9fb196201bea85b6134bf"
+      sha256: f948e346c12f8d5480d2825e03de228d0eb8c3a737e4cdaa122267b89c022b5e
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.26"
+    version: "2.0.28"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -196,10 +196,10 @@ packages:
     dependency: transitive
     description:
       name: http_parser
-      sha256: "2aa08ce0341cc9b354a498388e30986515406668dbcc4f7c950c3e715496693b"
+      sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.2"
+    version: "4.1.2"
   leak_tracker:
     dependency: transitive
     description:
@@ -364,10 +364,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_android
-      sha256: "9f9f3d372d4304723e6136663bb291c0b93f5e4c8a4a6314347f481a33bda2b1"
+      sha256: "20cbd561f743a342c76c151d6ddb93a9ce6005751e7aa458baad3858bfbfb6ac"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.7"
+    version: "2.4.10"
   shared_preferences_foundation:
     dependency: transitive
     description:
@@ -497,10 +497,10 @@ packages:
     dependency: transitive
     description:
       name: video_player_android
-      sha256: "391e092ba4abe2f93b3e625bd6b6a6ec7d7414279462c1c0ee42b5ab8d0a0898"
+      sha256: "4a5135754a62dbc827a64a42ef1f8ed72c962e191c97e2d48744225c2b9ebb73"
       url: "https://pub.dev"
     source: hosted
-    version: "2.7.16"
+    version: "2.8.7"
   video_player_avfoundation:
     dependency: transitive
     description:
@@ -550,5 +550,5 @@ packages:
     source: hosted
     version: "1.1.0"
 sdks:
-  dart: ">=3.7.0-0 <4.0.0"
-  flutter: ">=3.24.0"
+  dart: ">=3.7.0 <4.0.0"
+  flutter: ">=3.29.0"
