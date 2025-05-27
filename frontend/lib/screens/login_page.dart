@@ -18,6 +18,8 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text.trim();
 
     final result = await AuthService.login(id, password);
+    print('ServerCheck: 서버 연결 시도 완료, 결과: $result');
+
 
     if (result == true) {
       final prefs = await SharedPreferences.getInstance();
