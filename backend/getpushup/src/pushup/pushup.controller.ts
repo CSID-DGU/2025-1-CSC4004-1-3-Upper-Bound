@@ -11,6 +11,7 @@ import {
   Delete,
   BadRequestException,
   Query,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -18,6 +19,9 @@ import { extname } from 'path';
 import { exec } from 'child_process';
 import * as util from 'util';
 import { PushupService } from './pushup.service';
+import { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
+import { join } from 'path';
 
 @Controller('pushup')
 export class PushupController {
@@ -69,6 +73,7 @@ export class PushupController {
   @Get('analytics/allsummary')
   getAllSummary() {
   return this.pushupService.getAllAnalysesSummary();
+
   }
 
   @Get('analytics')
@@ -88,5 +93,19 @@ export class PushupController {
   @Delete('analytics/:analysisId')
   deleteAnalysis(@Param('analysisId') id: string) {
   return this.pushupService.deleteAnalysisById(id);
-  } 
+
+  }
+  
+  @Get('video/:analysisId')
+  async streamVideo(@Param('analysisId') analysisId: string, @Res() res: Response) {
+  const videoPath = join(__dirname, '..', '..', 'output_video', `output${analysisId}.mp4`);
+
+  if (!existsSync(videoPath)) {
+    return res.status(404).send('Video not found');
+  }
+
+  const stream = createReadStream(videoPath);
+  res.setHeader('Content-Type', 'video/mp4');
+  stream.pipe(res);
+  }
 }
