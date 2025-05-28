@@ -20,7 +20,7 @@ import { exec } from 'child_process';
 import * as util from 'util';
 import { PushupService } from './pushup.service';
 import { Response } from 'express';
-import { createReadStream, existsSync } from 'fs';
+import * as fs from 'fs';
 import { join } from 'path';
 
 @Controller('pushup')
@@ -98,14 +98,21 @@ export class PushupController {
   
   @Get('video/:analysisId')
   async streamVideo(@Param('analysisId') analysisId: string, @Res() res: Response) {
-  const videoPath = join(__dirname, '..', '..', 'output_video', `output${analysisId}.mp4`);
+  const videoPath: string = join(process.cwd(), '..', 'output_video', `output${analysisId}.mp4`);
 
-  if (!existsSync(videoPath)) {
+  if (!fs.existsSync(videoPath)) {
     return res.status(404).send('Video not found');
   }
 
-  const stream = createReadStream(videoPath);
-  res.setHeader('Content-Type', 'video/mp4');
+  const stat = fs.statSync(videoPath);
+  const fileSize = stat.size;
+
+  res.writeHead(200, {
+    'Content-Type': 'video/mp4',
+    'Content-Length': fileSize,
+  });
+
+  const stream = fs.createReadStream(videoPath);
   stream.pipe(res);
   }
 }
