@@ -5,7 +5,6 @@ import os
 import numpy as np
 import math
 
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from scipy.signal import find_peaks
@@ -59,12 +58,23 @@ LEFT_KNEE = 25
 LEFT_ANKLE = 27
 LEFT_HEEL = 29
 LEFT_TOE = 31
+RIGHT_BODY_PARTS = {
+    # mp_pose.PoseLandmark.RIGHT_SHOULDER,
+    mp_pose.PoseLandmark.RIGHT_ELBOW,
+    mp_pose.PoseLandmark.RIGHT_WRIST,
+    # mp_pose.PoseLandmark.RIGHT_HIP,
+    mp_pose.PoseLandmark.RIGHT_KNEE,
+    mp_pose.PoseLandmark.RIGHT_ANKLE,
+    mp_pose.PoseLandmark.RIGHT_FOOT_INDEX,
+    mp_pose.PoseLandmark.RIGHT_HEEL,
+    mp_pose.PoseLandmark.RIGHT_PINKY,
+    mp_pose.PoseLandmark.RIGHT_INDEX,
+    mp_pose.PoseLandmark.RIGHT_THUMB,
+}
 
 
-
-def detect_and_display(video_path): # landmark 추출
+def detect_and_display(video_path, analysisId): # landmark 추출
     cap = cv2.VideoCapture(video_path)
-
     if not cap.isOpened():
         error = {"error": f"Cannot open video {video_path}"}
         print(json.dumps(error))
@@ -73,8 +83,15 @@ def detect_and_display(video_path): # landmark 추출
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 🔺 추가됨
-    # out = cv2.VideoWriter('output_pose.mp4', fourcc, fps, (width, height))
+    # 세로 영상이면 회전
+    rotate = height > width
+    if rotate:
+        width, height = height, width
+
+    output_dir = '../output_video/'
+    os.makedirs(output_dir, exist_ok=True)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
+    out = cv2.VideoWriter(output_dir+f'output{analysisId}.mp4', fourcc, fps, (width, height))
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
 
@@ -83,6 +100,9 @@ def detect_and_display(video_path): # landmark 추출
         if not success:
             #print("End of video.")
             break
+
+        if rotate:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         # BGR(기본 OpenCV 포맷) → RGB (MediaPipe는 RGB 사용)
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -93,8 +113,14 @@ def detect_and_display(video_path): # landmark 추출
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) # 다시 BGR로 변환
 
         row = [frame_idx]  # 현재 프레임 번호
+        
 
         if results.pose_landmarks: # 포즈가 감지된 경우
+            for idx in RIGHT_BODY_PARTS:
+                results.pose_landmarks.landmark[idx].x = 0.0
+                results.pose_landmarks.landmark[idx].y = 0.0
+                results.pose_landmarks.landmark[idx].z = 0.0
+                results.pose_landmarks.landmark[idx].visibility = 0.0
             # landmark 그리기
             mp_drawing.draw_landmarks( 
                 image,
@@ -130,11 +156,18 @@ def detect_and_display(video_path): # landmark 추출
                 row.extend([0.0] * 33 * 4)
 
         landmark_list.append(row)
-
         #실시간 영상 보여주기
-        #cv2.imshow('Pose Detection', image)
-        # out.write(image)
+        # cv2.imshow('Pose Detection', image)
+        out.write(image)
         frame_idx += 1
+
+        #푸시업 종료시 -> 영상 종료
+        shoulder = get_coord(row, LEFT_SHOULDER)
+        hip = get_coord(row, LEFT_HIP)
+        knee = get_coord(row, LEFT_KNEE)
+        hip_angle = calculate_angle(shoulder[:2], hip[:2], knee[:2])
+        if hip_angle < 100:
+            break
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -142,9 +175,8 @@ def detect_and_display(video_path): # landmark 추출
     landmark_array = np.array(landmark_list)
     #print("Shape:", landmark_array.shape)
     #print("First 3 frames:\n", landmark_array[:3, :])
-    # out.release()
+    out.release()
     cap.release()
-    
     cv2.destroyAllWindows()
 
 def calculate_angle(a, b, c):
@@ -157,7 +189,11 @@ def calculate_angle(a, b, c):
     bc = c - b
 
     # 코사인 각도 계산
-    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    denom = np.linalg.norm(ba) * np.linalg.norm(bc)
+    if denom == 0:
+        cosine_angle = 0.0
+    else:
+        cosine_angle = np.dot(ba, bc) / denom
     angle = np.arccos(cosine_angle)  # 라디안
     return np.degrees(angle)  # degree로 변환
 
@@ -218,27 +254,41 @@ def analysis():
         hip_angles.append(hip_angle)
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
-
+    #상완 길이
     upper_arm_lengths = gaussian_filter1d(upper_arm_lengths, sigma=2)
     upper_arm_bottom, _ = find_peaks(-upper_arm_lengths)
     upper_arm_point = sum(upper_arm_lengths[upper_arm_bottom])/len(upper_arm_bottom)
     forearm_point = sum(forearm_lengths)/len(forearm_lengths)
     abduction_point = forearm_point/upper_arm_point
-
+    #팔꿈치 정렬
     max_elbow_alignment = max(elbow_x)
     min_elbow_alignment = min(elbow_x)
-
+    #팔꿈치 가동범위
     smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
     top_position, _ = find_peaks(smooth_elbow)
     bottom_position, _ = find_peaks(-smooth_elbow)
     avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
-    
+    #하체 정렬
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
     # print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
     # print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
     # print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     # print(f"하체 정렬 : {avg_lower_alignment}")
+
+    #점수
+    score1 = min(100, max(0, (min_elbow_alignment - 45 ) * 100 // 45))
+    score2 = min(100, max(0, avg_elbow_rom * 100 // 90))
+    score3 = max(0, min(100, (90 - avg_lower_alignment) * 100 // 70))
+    pushup_count = len(bottom_position)
+    score1 = score1/100*35
+    score2 = score2/100*35
+    score3 = score3/100*30
     result = {
+    "pushup_count": pushup_count,
+    "score1": score1,
+    "score2": score2,
+    "score3": score3,
+    "total_score": (score1+score2+score3),
     "elbow_alignment": min_elbow_alignment,
     "abduction_angle": abduction_point * 112.3605 - 177.2080,
     "avg_elbow_rom": avg_elbow_rom,
@@ -247,6 +297,9 @@ def analysis():
     "elbow_rom_timeline": smooth_elbow.tolist(),
     "lower_alignment_timline": lower_body_alignment,
     }
+    for k, v in result.items():
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+            result[k] = 0.0
     print(json.dumps(result))
 
         
@@ -287,7 +340,8 @@ def plot_joint_angles():
     plt.grid(True)
 
     plt.subplot(2, 2, 4)
-    plt.plot(frames, lower_body_alignment, color='green')
+    #plt.plot(frames, lower_body_alignment, color='green')
+    plt.plot(frames,hip_angles , color='green')
     plt.xlabel("Frame")
     plt.ylabel("Angle (°)")
     plt.title("Lowbody Aligment")
@@ -313,6 +367,7 @@ if __name__ == "__main__":
     else:
         #video_path = os.path.join(os.getcwd(), "wide0.mp4")
         video_path = sys.argv[1]
-        detect_and_display(video_path)
+        analysisId = sys.argv[2]
+        detect_and_display(video_path, analysisId)
         analysis()
         #plot_joint_angles()

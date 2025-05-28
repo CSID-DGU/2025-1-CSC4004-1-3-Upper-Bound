@@ -73,6 +73,7 @@ export class PushupController {
   @Get('analytics/allsummary')
   getAllSummary() {
   return this.pushupService.getAllAnalysesSummary();
+
   }
 
   @Get('analytics')
@@ -92,6 +93,7 @@ export class PushupController {
   @Delete('analytics/:analysisId')
   deleteAnalysis(@Param('analysisId') id: string) {
   return this.pushupService.deleteAnalysisById(id);
+
   }
   
   @Get('video/:analysisId')

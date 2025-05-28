@@ -217,22 +217,34 @@ def analysis():
         knee_angles.append(knee_angle)
         lower_body_alignment.append(180-(hip_angle+knee_angle)/2)
 
+    #상완 길이
     upper_arm_lengths = gaussian_filter1d(upper_arm_lengths, sigma=2)
+    #상완 길이 최저점
     upper_arm_bottom, _ = find_peaks(-upper_arm_lengths)
     upper_arm_point = sum(upper_arm_lengths[upper_arm_bottom])/len(upper_arm_bottom)
     forearm_point = sum(forearm_lengths)/len(forearm_lengths)
     abduction_point = forearm_point/upper_arm_point
 
+    #팔꿈치 정렬
     max_elbow_alignment = max(elbow_x)
     min_elbow_alignment = min(elbow_x)
 
+    #팔꿈치 가동범위
     smooth_elbow = gaussian_filter1d(elbow_angles, sigma=2)
     top_position, _ = find_peaks(smooth_elbow)
     bottom_position, _ = find_peaks(-smooth_elbow)
     avg_elbow_rom = sum(smooth_elbow[top_position])/len(top_position)-sum(smooth_elbow[bottom_position])/len(bottom_position)
     
     avg_lower_alignment = (sum(lower_body_alignment) / len(lower_body_alignment))
-    print(f"팔꿈치 정렬 각도 : 최대 {max_elbow_alignment} 최소 {min_elbow_alignment}")
+
+    #점수 1팔꿈치 정렬, 2가동범위, 3하체정렬
+    score1 = min(100, max(0, (min_elbow_alignment - 45 ) * 100 // 45))
+    score2 = min(100, max(0, avg_elbow_rom * 100 // 90))
+    score3 = max(0, min(100, (90 - avg_lower_alignment) * 100 // 70))
+    pushup_count = len(bottom_position)
+    print(f"푸시업 개수 {pushup_count}")
+    print(f"점수 {score1} {score2} {score3}")
+    print(f"팔꿈치 정렬 각도 : 최소 {min_elbow_alignment}")
     print(f"어깨 외전 각도 : {abduction_point * 112.3605 - 177.2080}")
     print(f"팔꿈치 가동범위 : {avg_elbow_rom}")
     print(f"하체 정렬 : {avg_lower_alignment}")
@@ -292,7 +304,7 @@ def plot_joint_angles():
     plt.show()
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "widetest.mp4")
+    video_path = os.path.join(os.getcwd(), "kong.mp4")
     detect_and_display(video_path)
     analysis()
     plot_joint_angles()

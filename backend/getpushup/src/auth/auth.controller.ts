@@ -8,6 +8,7 @@ export class AuthController {
   @Post('signup')
   signup(@Body() body: { userId: string; password: string; height: number }) {
   if (!body.height) {
+    console.log('Received body:', body); 
     throw new BadRequestException('키(height)는 필수 항목입니다.');
   }
   return this.authService.signup(body.userId, body.password, body.height);
