@@ -28,8 +28,9 @@ class AuthService {
         print('statusCode: ${response.statusCode}');
         return false;
       }
-    } catch (e) {
+    } catch (e,stacktrace) {
       print('로그인 오류: $e');
+      print('Stacktrace: $stacktrace');
       return false;
     }
   }

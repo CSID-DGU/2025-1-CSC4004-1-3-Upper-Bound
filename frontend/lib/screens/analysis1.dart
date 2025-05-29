@@ -117,6 +117,17 @@ class _Analysis1PageState extends State<Analysis1Page> {
     }
   }
 
+  // 하체 정렬 점수 가이드
+  String getLowerBodyGuide(double value) {
+    if (value >= 20 && value <= 90) {
+      return '하체 자세가 불안정합니다. 교정이 필요합니다.';
+    } else if (value >= 0 && value < 20) {
+      return '하체 정렬이 잘 되어 있습니다.';
+    } else {
+      return '정확한 점수를 확인해 주세요.';
+    }
+  }
+
   String getPalmMoveGuide(double value) {
     if (value < 40) {
       return '팔꿈치를 몸에서 좀 더 벌려 공간을 확보하세요.';
@@ -154,17 +165,42 @@ class _Analysis1PageState extends State<Analysis1Page> {
     required double highStandard,
     required double max,
     required String unit,
+    bool isReverse = false,
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = 32.0;
     final double barWidth = screenWidth - horizontalPadding;
 
-    double totalRange = max - min;
-    double lowRange = (lowStandard - min) / totalRange;
-    double stdRange = (highStandard - lowStandard) / totalRange;
-    double highRange = (max - highStandard) / totalRange;
+    double calcValue = isReverse ? (max + min - value) : value;
+    double calcMin = min;
+    double calcMax = max;
+    double calcLowStandard = lowStandard;
+    double calcHighStandard = highStandard;
 
-    double normalizedValue = ((value - min) / totalRange).clamp(0.0, 1.0);
+    if (isReverse) {
+      calcMin = max;
+      calcMax = min;
+      calcLowStandard = max + min - lowStandard;
+      calcHighStandard = max + min - highStandard;
+    }
+
+    double totalRange = calcMax - calcMin;
+    double lowRange = (calcLowStandard - calcMin) / totalRange;
+    double stdRange = (calcHighStandard - calcLowStandard) / totalRange;
+    double highRange = (calcMax - calcHighStandard) / totalRange;
+
+    double normalizedValue = ((calcValue - calcMin) / totalRange).clamp(0.0, 1.0);
+
+    bool hideMaxValue = false;
+    if (min == 0 && lowStandard == 80 && highStandard == 90 && max == 90) {
+      hideMaxValue = true;
+    }
+    if (min == 0 && lowStandard == 80 && highStandard == 180 && max == 180) {
+      hideMaxValue = true;
+    }
+    if (min == 90 && lowStandard == 20 && highStandard == 0 && max == 0) {
+      hideMaxValue = true;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,6 +244,19 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
+
+            Positioned(
+              left: 0,
+              top: 30,
+              child: Text(
+                min.toString(),
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
             Positioned(
               left: barWidth * lowRange - 10,
               top: 30,
@@ -232,9 +281,24 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
+
+            if (!hideMaxValue)
+              Positioned(
+                left: barWidth - 20,
+                top: 30,
+                child: Text(
+                  max.toString(),
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
           ],
         ),
-        const SizedBox(height: 30),
+
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -245,7 +309,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         SizedBox(
           height: 120,
           child: ListView.separated(
@@ -346,12 +409,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
                     fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              Text(
-                '하체 정렬 점수: ${lowerBodyScore.toStringAsFixed(1)} 점',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
+
               Text(
                 '총점: ${score.toStringAsFixed(1)} 점',
                 style: const TextStyle(
@@ -359,27 +417,67 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
               const SizedBox(height: 10),
 
+              Row(
+                children: const [
+                  Text(
+                    '하체 정렬 (°)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              buildInbodyBar(
+                value: lowerBodyScore,
+                min: 90,
+                lowStandard: 20,
+                highStandard: 0,
+                max: 0,
+                unit: '°',
+                isReverse: true,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                getLowerBodyGuide(lowerBodyScore),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(thickness: 0.5, color: Colors.grey),
+              const SizedBox(height: 20),
+
               // 팔꿈치 이동 정도
               Row(
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     '팔꿈치 이동 정도 (°)',
                     style: TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               buildInbodyBar(
                 value: palmMove,
-                min: 40,
-                lowStandard: 60,
+                min: 0,
+                lowStandard: 80,
                 highStandard: 90,
-                max: 110,
+                max: 90,
                 unit: '°',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
               Text(
                 getPalmMoveGuide(palmMove),
                 style: const TextStyle(
@@ -388,31 +486,31 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
               // 어깨 외전 각도
               Row(
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     '어깨 외전 각도 (°)',
                     style: TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               buildInbodyBar(
                 value: shoulderOuter,
-                min: 20,
-                lowStandard: 30,
-                highStandard: 60,
-                max: 70,
+                min: 0,
+                lowStandard: 20,
+                highStandard: 70,
+                max: 90,
                 unit: '°',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
               Text(
                 getShoulderOuterGuide(shoulderOuter),
                 style: const TextStyle(
@@ -421,31 +519,31 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
               // 팔꿈치 굴곡 각도
               Row(
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     '팔꿈치 굴곡 각도 (°)',
                     style: TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               buildInbodyBar(
                 value: elbowAngle,
-                min: 70,
-                lowStandard: 90,
-                highStandard: 110,
-                max: 130,
+                min: 0,
+                lowStandard: 80,
+                highStandard: 180,
+                max: 180,
                 unit: '°',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
               Text(
                 getElbowAngleGuide(elbowAngle),
                 style: const TextStyle(
