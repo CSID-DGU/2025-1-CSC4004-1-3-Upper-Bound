@@ -98,14 +98,15 @@ export class PushupController {
   
   @Get('video/:analysisId')
   async streamVideo(@Param('analysisId') analysisId: string, @Res() res: Response) {
-  const videoPath = join(__dirname, '..', '..', 'output_video', `output${analysisId}.mp4`);
-
+  const videoPath = join(__dirname,'..', '..', '..', 'output_video', `output${analysisId}.mp4`);
+  
   if (!existsSync(videoPath)) {
-    return res.status(404).send('Video not found');
+    return res.status(404).send(videoPath);
   }
 
   const stream = createReadStream(videoPath);
   res.setHeader('Content-Type', 'video/mp4');
+  
   stream.pipe(res);
   }
 }
