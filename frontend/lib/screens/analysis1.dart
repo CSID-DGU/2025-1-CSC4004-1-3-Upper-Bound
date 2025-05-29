@@ -129,7 +129,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
   }
 
   String getPalmMoveGuide(double value) {
-    if (value < 40) {
+    if (value < 80) {
       return '팔꿈치를 몸에서 좀 더 벌려 공간을 확보하세요.';
     } else if (value > 90) {
       return '팔꿈치를 몸 쪽으로 살짝 모아 긴장을 줄이세요.';
@@ -141,7 +141,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
   String getShoulderOuterGuide(double value) {
     if (value < 20) {
       return '팔을 몸 옆으로 곧게 들어 올려 주세요.';
-    } else if (value > 60) {
+    } else if (value > 70) {
       return '팔을 들어 올릴 때 어깨가 과도하게 올라가지 않도록 조절하세요.';
     } else {
       return '어깨 외전 각도가 적절합니다.';
