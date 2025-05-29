@@ -46,7 +46,9 @@ class _Analysis2PageState extends State<Analysis2Page> {
     }
   }
 
-  Widget _buildLineChart(List<double> data, Color color) {
+  // anomalyMinY, anomalyMaxY 지정하면 이상값 박스 표시
+  Widget _buildLineChart(List<double> data, Color color,
+      {double? anomalyMinY, double? anomalyMaxY}) {
     const margin = 5.0;
     double minY = data.reduce((a, b) => a < b ? a : b) - margin;
     double maxY = data.reduce((a, b) => a > b ? a : b) + margin;
@@ -56,10 +58,19 @@ class _Analysis2PageState extends State<Analysis2Page> {
       maxY = temp;
     }
 
+    final List<HorizontalRangeAnnotation> anomalyRanges = [];
+    if (anomalyMinY != null && anomalyMaxY != null) {
+      anomalyRanges.add(HorizontalRangeAnnotation(
+        y1: anomalyMinY,
+        y2: anomalyMaxY,
+        color: Colors.blue.withOpacity(0.2),  // 파란색으로 변경
+      ));
+    }
+
     return LineChart(
       LineChartData(
         minX: 0,
-        maxX: data.length.toDouble(), // fps 나누기 제거, 인덱스 그대로 사용
+        maxX: data.length.toDouble(),
         minY: minY,
         maxY: maxY,
         gridData: const FlGridData(show: true),
@@ -101,7 +112,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
             spots: data
                 .asMap()
                 .entries
-                .map((e) => FlSpot(e.key.toDouble(), e.value)) // fps 나누기 제거
+                .map((e) => FlSpot(e.key.toDouble(), e.value))
                 .toList(),
             isCurved: true,
             color: color,
@@ -109,6 +120,9 @@ class _Analysis2PageState extends State<Analysis2Page> {
             belowBarData: BarAreaData(show: false),
           ),
         ],
+        rangeAnnotations: RangeAnnotations(
+          horizontalRangeAnnotations: anomalyRanges,
+        ),
       ),
     );
   }
@@ -169,19 +183,34 @@ class _Analysis2PageState extends State<Analysis2Page> {
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              SizedBox(height: 300, child: _buildLineChart(elbowY, Colors.blue)),
+              // 팔꿈치 상하 움직임에만 100~120 구간 이상값 박스 표시
+              SizedBox(
+                height: 300,
+                child: _buildLineChart(elbowY, Colors.blue,
+                    anomalyMinY: 100, anomalyMaxY: 120),
+              ),
               const SizedBox(height: 20),
               const Text('팔꿈치 굽힘 각도',
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              SizedBox(height: 300, child: _buildLineChart(elbowFlexion, Colors.green)),
+              // 팔꿈치 굽힘 각도에 0~20 구간 이상값 박스 표시 추가
+              SizedBox(
+                height: 300,
+                child: _buildLineChart(elbowFlexion, Colors.green,
+                    anomalyMinY: 0, anomalyMaxY: 20),
+              ),
               const SizedBox(height: 20),
               const Text('하체 각도',
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              SizedBox(height: 300, child: _buildLineChart(lowerBodyAngle, Colors.orange)),
+              // 하체 각도에 0~10 구간 이상값 박스 표시 추가
+              SizedBox(
+                height: 300,
+                child: _buildLineChart(lowerBodyAngle, Colors.orange,
+                    anomalyMinY: 0, anomalyMaxY: 10),
+              ),
             ],
           ),
         ),
