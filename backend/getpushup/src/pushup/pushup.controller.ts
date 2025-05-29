@@ -93,9 +93,8 @@ export class PushupController {
   @Delete('analytics/:analysisId')
   deleteAnalysis(@Param('analysisId') id: string) {
   return this.pushupService.deleteAnalysisById(id);
-
   }
-  
+
   @Get('video/:analysisId')
   async streamVideo(@Param('analysisId') analysisId: string, @Res() res: Response) {
   const videoPath: string = join(process.cwd(), '..', 'output_video', `output${analysisId}.mp4`);
