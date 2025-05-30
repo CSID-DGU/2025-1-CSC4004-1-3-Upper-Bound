@@ -18,6 +18,8 @@ class _MainScreenState extends State<MainScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   bool _isRecording = false;
+  int _countdown = 0;
+  bool _isCountingDown = false;
 
   @override
   void initState() {
@@ -62,6 +64,24 @@ class _MainScreenState extends State<MainScreen> {
           );
         }
       } else {
+        // 카운트다운 시작
+        setState(() {
+          _isCountingDown = true;
+          _countdown = 3;
+        });
+
+        for (int i = 2; i >= 0; i--) {
+          await Future.delayed(const Duration(seconds: 1));
+          setState(() {
+            _countdown = i;
+          });
+        }
+
+        setState(() {
+          _isCountingDown = false;
+        });
+
+        // 3초 후 녹화 시작
         await _controller.prepareForVideoRecording();
         await _controller.startVideoRecording();
         setState(() => _isRecording = true);
@@ -73,6 +93,7 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +126,29 @@ class _MainScreenState extends State<MainScreen> {
                     CustomPaint(
                       painter: HandGuidePainter(),
                     ),
+
+                    // 카운트다운 오버레이
+                    if (_isCountingDown)
+                      Container(
+                        color: Colors.black.withOpacity(0.6),
+                        alignment: Alignment.center,
+                        child: Transform.rotate(
+                          angle: -1.5708, // -90도
+                          child: Text(
+                            '$_countdown',
+                            style: const TextStyle(
+                              fontSize: 80,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
             );
+
           } else {
             return const Center(child: CircularProgressIndicator());
           }
