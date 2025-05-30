@@ -151,10 +151,10 @@ def detect_and_display(video_path, analysisId): # landmark 추출
             for landmark in results.pose_landmarks.landmark:
                 row.extend([landmark.x, landmark.y, landmark.z, landmark.visibility])
         else:
-            if frame_idx-1 < 0:
-                row.extend(frame_idx-1)
-            else:
-                row.extend([0.0] * 33 * 4)
+            # if frame_idx - 1 < 0:
+            #     row.extend(landmark_list[frame_idx-1])
+            
+            row.extend([0.0] * 33 * 4)
 
         landmark_list.append(row)
         #실시간 영상 보여주기
@@ -258,6 +258,23 @@ def analysis():
     #상완 길이
     upper_arm_lengths = gaussian_filter1d(upper_arm_lengths, sigma=2)
     upper_arm_bottom, _ = find_peaks(-upper_arm_lengths)
+    if len(upper_arm_bottom) <= 1:
+        result = {
+        "pushup_count": 0,
+        "score1": 0,
+        "score2": 0,
+        "score3": 0,
+        "total_score": 0,
+        "elbow_alignment": 0,
+        "abduction_angle": 0,
+        "avg_elbow_rom": 0,
+        "avg_lower_alignment": 0,
+        "elbow_alignment_timeline": [0],
+        "elbow_rom_timeline": [0],
+        "lower_alignment_timline": [0],
+        }
+        print(json.dumps(result))
+        return
     upper_arm_point = sum(upper_arm_lengths[upper_arm_bottom])/len(upper_arm_bottom)
     forearm_point = sum(forearm_lengths)/len(forearm_lengths)
     abduction_point = forearm_point/upper_arm_point
