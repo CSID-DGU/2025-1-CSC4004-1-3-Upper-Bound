@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 
 import 'analysis1.dart';
+import '../globals/auth_user.dart';
 
 class Analysis2Page extends StatefulWidget {
   final int analysisId;
@@ -29,7 +30,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
 
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
-        'http://43.201.78.241:3000/pushup/analytics?analysisId=${widget.analysisId}'));
+        '$urlIp/pushup/analytics?analysisId=${widget.analysisId}'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

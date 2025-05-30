@@ -3,6 +3,7 @@ import 'package:frontend/screens/analysis1.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../globals/auth_user.dart';
 
 class RecordsScreen extends StatefulWidget {
   const RecordsScreen({super.key});
@@ -24,7 +25,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final listUrl =
-        Uri.parse('http://43.201.78.241:3000/pushup/analytics?userId=$userId');
+        Uri.parse('$urlIp/pushup/analytics?userId=$userId');
 
     try {
       final response = await http.get(listUrl);

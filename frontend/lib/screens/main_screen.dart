@@ -4,6 +4,7 @@ import 'display_video_screen.dart';
 import '../utils/hand_guide_painter.dart';
 import '../services/video_upload_service.dart';
 import '../globals/auth_user.dart';
+import 'analysis1.dart';
 
 class MainScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -20,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _isRecording = false;
   int _countdown = 0;
   bool _isCountingDown = false;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -46,16 +48,21 @@ class _MainScreenState extends State<MainScreen> {
       if (_isRecording) {
         final XFile videoFile = await _controller.stopVideoRecording();
         setState(() => _isRecording = false);
+        setState(() => _isUploading = true);
 
-        final success = await VideoUploadService.uploadVideo(videoFile.path, currentUserId ?? '');
+// analysisId를 받도록 수정
+        final analysisId = await VideoUploadService.uploadVideo(videoFile.path, currentUserId ?? '');
+        print('받은 analysisId: $analysisId');
 
+
+        setState(() => _isUploading = false);
         if (!mounted) return;
 
-        if (success) {
+        if (analysisId != null) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DisplayVideoScreen(videoPath: videoFile.path),
+              builder: (context) => Analysis1Page(analysisId: analysisId),
             ),
           );
         } else {
@@ -63,14 +70,15 @@ class _MainScreenState extends State<MainScreen> {
             const SnackBar(content: Text('업로드 실패')),
           );
         }
+
       } else {
         // 카운트다운 시작
         setState(() {
           _isCountingDown = true;
-          _countdown = 3;
+          _countdown = 5;
         });
 
-        for (int i = 2; i >= 0; i--) {
+        for (int i = 4; i >= 0; i--) {
           await Future.delayed(const Duration(seconds: 1));
           setState(() {
             _countdown = i;
@@ -93,7 +101,6 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +140,7 @@ class _MainScreenState extends State<MainScreen> {
                         color: Colors.black.withOpacity(0.6),
                         alignment: Alignment.center,
                         child: Transform.rotate(
-                          angle: -1.5708, // -90도
+                          angle: 1.5708, // -90도
                           child: Text(
                             '$_countdown',
                             style: const TextStyle(
@@ -144,6 +151,30 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         ),
                       ),
+                    if (_isUploading)
+                      Container(
+                        color: Colors.black.withOpacity(0.6),
+                        alignment: Alignment.center,
+                        child: Transform.rotate(
+                          angle: 1.5708,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              CircularProgressIndicator(color: Colors.white),
+                              SizedBox(height: 20),
+                              Text(
+                                '업로드 중...',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                   ],
                 ),
               ),

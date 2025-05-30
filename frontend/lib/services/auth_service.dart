@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import '../globals/auth_user.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://43.201.78.241:3000';
+  static const String baseUrl = '$urlIp';
 
   static Future<bool> login(String userId, String password) async {
-    final url = Uri.parse('$baseUrl/user/login');
+    final url = Uri.parse('$urlIp/user/login');
 
     try {
       final response = await http.post(

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'analysis2.dart';
 import 'display_video_screen.dart';
+import '../globals/auth_user.dart';
 
 class Analysis1Page extends StatefulWidget {
   final int analysisId;
@@ -31,7 +32,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
   String? userId;
 
   List<String> videoUrls = [
-    'http://43.201.78.241:3000/pushup/upload',
+    '$urlIp/pushup/upload',
   ];
 
   @override
@@ -67,7 +68,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
 
     try {
       final detailUrl = Uri.parse(
-          'http://43.201.78.241:3000/pushup/analytics?analysisId=${widget.analysisId}');
+          '$urlIp/pushup/analytics?analysisId=${widget.analysisId}');
       final detailResponse = await http.get(detailUrl);
 
       if (detailResponse.statusCode == 200) {
