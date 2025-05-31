@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 
 import 'analysis2.dart';
-import 'display_video_screen.dart';
 import '../globals/auth_user.dart';
 
 class Analysis1Page extends StatefulWidget {
@@ -25,20 +25,42 @@ class _Analysis1PageState extends State<Analysis1Page> {
   double score = 0.0;
 
   bool _isLoading = true;
-  String? _rawJson;
-  String? _summaryJson;
   String? _error;
 
   String? userId;
-
-  List<String> videoUrls = [
-    '$urlIp/pushup/upload',
-  ];
+  String? selectedVideoUrl;
+  VideoPlayerController? _videoController;
 
   @override
   void initState() {
     super.initState();
     loadUserIdAndFetchData();
+  }
+
+  Future<void> _initVideo(String url) async {
+    await _videoController?.pause();
+    await _videoController?.dispose();
+
+    _videoController = VideoPlayerController.network(url);
+    _videoController!.addListener(() {
+      if (_videoController!.value.hasError) {
+        print('Video player error: ${_videoController!.value.errorDescription}');
+      }
+    });
+
+    try {
+      await _videoController!.initialize();
+      setState(() {});
+      _videoController!.play();
+    } catch (e) {
+      print('Video initialize error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
   }
 
   Future<void> loadUserIdAndFetchData() async {
@@ -62,8 +84,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
     setState(() {
       _isLoading = true;
       _error = null;
-      _rawJson = null;
-      _summaryJson = null;
+      selectedVideoUrl = null;
     });
 
     try {
@@ -82,13 +103,20 @@ class _Analysis1PageState extends State<Analysis1Page> {
           });
           return;
         }
+
         final summary =
         (summaryRaw is String) ? jsonDecode(summaryRaw) : summaryRaw;
 
-        setState(() {
-          _rawJson = jsonEncode(detailData);
-          _summaryJson = jsonEncode(summary);
+        String? videoUrlFromApi = detailData['video_url'];
+        if (videoUrlFromApi != null && videoUrlFromApi.isNotEmpty) {
+          selectedVideoUrl = videoUrlFromApi;
+          await _initVideo(videoUrlFromApi);
+        } else {
+          selectedVideoUrl = '$urlIp/pushup/video/${widget.analysisId}';
+          await _initVideo(selectedVideoUrl!);
+        }
 
+        setState(() {
           palmMove = (summary['elbow_motion'] as num?)?.toDouble() ?? 0.0;
           shoulderOuter =
               (summary['shoulder_abduction'] as num?)?.toDouble() ?? 0.0;
@@ -118,44 +146,91 @@ class _Analysis1PageState extends State<Analysis1Page> {
     }
   }
 
-  // 하체 정렬 점수 가이드
+  Widget buildVideoPlayerBox() {
+    if (selectedVideoUrl == null) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const Text('영상 URL이 없습니다.', style: TextStyle(color: Colors.red)),
+      );
+    }
+
+    if (_videoController == null) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+
+    if (!_videoController!.value.isInitialized) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+
+    if (_videoController!.value.hasError) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: Text('영상 재생 오류: ${_videoController!.value.errorDescription}',
+            style: const TextStyle(color: Colors.red)),
+      );
+    }
+
+    return AspectRatio(
+      aspectRatio: _videoController!.value.aspectRatio,
+      child: VideoPlayer(_videoController!),
+    );
+  }
+
   String getLowerBodyGuide(double value) {
     if (value >= 20 && value <= 90) {
-      return '하체 자세가 불안정합니다. 교정이 필요합니다.';
+      return '하체 정렬이 불균형한 상태입니다. 자세를 곧게 펴는 것이 좋습니다.';
     } else if (value >= 0 && value < 20) {
-      return '하체 정렬이 잘 되어 있습니다.';
+      return '하체 균형이 잘 잡혀있습니다.';
     } else {
-      return '정확한 점수를 확인해 주세요.';
+      return 'Error!';
     }
   }
 
   String getPalmMoveGuide(double value) {
     if (value < 80) {
-      return '팔꿈치를 몸에서 좀 더 벌려 공간을 확보하세요.';
-    } else if (value > 90) {
-      return '팔꿈치를 몸 쪽으로 살짝 모아 긴장을 줄이세요.';
+      return '하체가 안정적으로 정렬되어 있어 균형이 잘 잡혀 있습니다.';
+    } else if (value >= 80 && value <= 90) {
+      return '푸쉬업 가동범위가 적절합니다.';
     } else {
-      return '팔꿈치 이동 범위가 적절합니다.';
+      return 'Error!';
     }
   }
 
   String getShoulderOuterGuide(double value) {
-    if (value < 20) {
-      return '팔을 몸 옆으로 곧게 들어 올려 주세요.';
-    } else if (value > 70) {
-      return '팔을 들어 올릴 때 어깨가 과도하게 올라가지 않도록 조절하세요.';
-    } else {
+    if (value < 20 && value >= 0) {
+      return '손목 간격이 너무 좁은 경우 손목에 부하가 증가할 수 있습니다.';
+    } else if (value >= 20 && value <= 60) {
       return '어깨 외전 각도가 적절합니다.';
+    } else if (value >= 60 && value <= 90) {
+      return '손목 간격이 너무 넓은 경우 어깨충돌증후군 발생 위험이 있습니다.';
+    } else {
+      return 'Error!';
     }
   }
 
   String getElbowAngleGuide(double value) {
-    if (value < 60) {
-      return '팔꿈치를 더 깊게 굽혀 가슴 쪽으로 당기세요.';
-    } else if (value > 110) {
-      return '팔꿈치 굴곡 각도를 적절히 조절하세요.';
+    if (value < 80) {
+      return '팔꿈치가 손목보다 뒤에 있을 경우 팔꿈치에 부하가 증가할 수 있습니다.';
+    } else if (value >= 80 && value <= 100) {
+      return '팔꿈치와 손목이 잘 정렬되어 있습니다.';
+    } else if (value >= 100 && value <= 180) {
+      return '팔꿈치가 손목보다 앞에 있을 경우 어깨와 손목에 부하가 증가할 수 있습니다.';
     } else {
-      return '팔꿈치 굴곡 범위가 적절합니다.';
+      return 'Error!';
     }
   }
 
@@ -203,6 +278,14 @@ class _Analysis1PageState extends State<Analysis1Page> {
       hideMaxValue = true;
     }
 
+    int intMin = min.toInt();
+    int intLowStandard = lowStandard.toInt();
+    int intHighStandard = highStandard.toInt();
+    int intMax = max.toInt();
+
+    final bool isLowerBodyMinFix = (min == 90 && max == 0);
+    final bool isElbowAngleMaxFix = (max == 180 && min == 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,12 +328,11 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
             Positioned(
-              left: 0,
+              left: isLowerBodyMinFix ? 12 : 0,
               top: 30,
               child: Text(
-                min.toString(),
+                intMin.toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -262,7 +344,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
               left: barWidth * lowRange - 10,
               top: 30,
               child: Text(
-                lowStandard.toString(),
+                intLowStandard.toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -271,10 +353,10 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
             ),
             Positioned(
-              left: barWidth * (lowRange + stdRange) - 10,
+              left: barWidth * (lowRange + stdRange) - 20,
               top: 30,
               child: Text(
-                highStandard.toString(),
+                intHighStandard.toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -282,13 +364,12 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
             if (!hideMaxValue)
               Positioned(
-                left: barWidth - 20,
+                left: isElbowAngleMaxFix ? barWidth - 60 : barWidth - 20,
                 top: 30,
                 child: Text(
-                  max.toString(),
+                  intMax.toString(),
                   style: const TextStyle(
                     color: Colors.black54,
                     fontWeight: FontWeight.bold,
@@ -298,48 +379,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
           ],
         ),
-
         const SizedBox(height: 20),
-      ],
-    );
-  }
-
-  Widget buildVideoList() {
-    if (videoUrls.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: videoUrls.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final url = videoUrls[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DisplayVideoScreen(videoPath: url),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 200,
-                  color: Colors.grey[300],
-                  alignment: Alignment.center,
-                  child: Text(
-                    '영상 ${index + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
       ],
     );
   }
@@ -361,8 +401,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
             ? const Center(child: CircularProgressIndicator())
             : _error != null
             ? Center(
-          child: Text(_error!,
-              style: const TextStyle(color: Colors.red)),
+          child: Text(_error!, style: const TextStyle(color: Colors.red)),
         )
             : SingleChildScrollView(
           child: Column(
@@ -386,8 +425,9 @@ class _Analysis1PageState extends State<Analysis1Page> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => Analysis2Page(
-                                analysisId: widget.analysisId)),
+                          builder: (context) =>
+                              Analysis2Page(analysisId: widget.analysisId),
+                        ),
                       );
                     },
                     child: const Text(
@@ -402,22 +442,20 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ],
               ),
               const SizedBox(height: 12),
-              buildVideoList(),
+
+              buildVideoPlayerBox(),
+
               const SizedBox(height: 15),
               Text(
                 '반복 횟수: $repetitionCount 회',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
               Text(
                 '총점: ${score.toStringAsFixed(1)} 점',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
               Row(
                 children: const [
                   Text(
@@ -430,9 +468,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               buildInbodyBar(
                 value: lowerBodyScore,
                 min: 90,
@@ -442,9 +478,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 unit: '°',
                 isReverse: true,
               ),
-
               const SizedBox(height: 20),
-
               Text(
                 getLowerBodyGuide(lowerBodyScore),
                 style: const TextStyle(
@@ -453,18 +487,14 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 20),
-
-              // 팔꿈치 이동 정도
               Row(
                 children: const [
                   Text(
-                    '팔꿈치 이동 정도 (°)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    '가동 범위 (°)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 8),
                 ],
@@ -490,14 +520,11 @@ class _Analysis1PageState extends State<Analysis1Page> {
               const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 20),
-
-              // 어깨 외전 각도
               Row(
                 children: const [
                   Text(
                     '어깨 외전 각도 (°)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 8),
                 ],
@@ -523,14 +550,11 @@ class _Analysis1PageState extends State<Analysis1Page> {
               const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 20),
-
-              // 팔꿈치 굴곡 각도
               Row(
                 children: const [
                   Text(
                     '팔꿈치 굴곡 각도 (°)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 8),
                 ],
