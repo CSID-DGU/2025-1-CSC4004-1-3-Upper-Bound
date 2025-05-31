@@ -237,8 +237,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
   Widget buildInbodyBar({
     required double value,
     required double min,
-    required double lowStandard,
-    required double highStandard,
+    required double anomalyMin,
+    required double anomalyMax,
     required double max,
     required String unit,
     bool isReverse = false,
@@ -250,41 +250,23 @@ class _Analysis1PageState extends State<Analysis1Page> {
     double calcValue = isReverse ? (max + min - value) : value;
     double calcMin = min;
     double calcMax = max;
-    double calcLowStandard = lowStandard;
-    double calcHighStandard = highStandard;
 
     if (isReverse) {
       calcMin = max;
       calcMax = min;
-      calcLowStandard = max + min - lowStandard;
-      calcHighStandard = max + min - highStandard;
     }
 
     double totalRange = calcMax - calcMin;
-    double lowRange = (calcLowStandard - calcMin) / totalRange;
-    double stdRange = (calcHighStandard - calcLowStandard) / totalRange;
-    double highRange = (calcMax - calcHighStandard) / totalRange;
 
+    // 위치 계산 (0~1 사이)
     double normalizedValue = ((calcValue - calcMin) / totalRange).clamp(0.0, 1.0);
+    double normalizedMin = 0.0;
+    double normalizedAnomalyMin = ((anomalyMin - calcMin) / totalRange).clamp(0.0, 1.0);
+    double normalizedAnomalyMax = ((anomalyMax - calcMin) / totalRange).clamp(0.0, 1.0);
+    double normalizedMax = 1.0;
 
-    bool hideMaxValue = false;
-    if (min == 0 && lowStandard == 80 && highStandard == 90 && max == 90) {
-      hideMaxValue = true;
-    }
-    if (min == 0 && lowStandard == 80 && highStandard == 180 && max == 180) {
-      hideMaxValue = true;
-    }
-    if (min == 90 && lowStandard == 20 && highStandard == 0 && max == 0) {
-      hideMaxValue = true;
-    }
-
-    int intMin = min.toInt();
-    int intLowStandard = lowStandard.toInt();
-    int intHighStandard = highStandard.toInt();
-    int intMax = max.toInt();
-
-    final bool isLowerBodyMinFix = (min == 90 && max == 0);
-    final bool isElbowAngleMaxFix = (max == 180 && min == 0);
+    // 최대값과 이상최대값이 같으면 이상최대값 표시하지 않음
+    bool hideAnomalyMax = (anomalyMax == max);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,47 +274,57 @@ class _Analysis1PageState extends State<Analysis1Page> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: barWidth * lowRange,
-                  height: 20,
-                  color: Colors.grey[200],
-                ),
-                Container(
-                  width: barWidth * stdRange,
-                  height: 20,
-                  color: Colors.blue[200],
-                ),
-                Container(
-                  width: barWidth * highRange,
-                  height: 20,
-                  color: Colors.grey[200],
-                ),
-              ],
+            // 전체 바
+            Container(
+              width: barWidth,
+              height: 20,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(5),
+              ),
             ),
+
+            // 이상범위 바 (파란색 반투명)
             Positioned(
-              left: (barWidth * normalizedValue - 12).clamp(0.0, barWidth - 40),
+              left: barWidth * normalizedAnomalyMin,
+              top: 0,
+              width: barWidth * (normalizedAnomalyMax - normalizedAnomalyMin),
+              height: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+            ),
+
+            // 현재값 위치 화살표 아이콘
+            Positioned(
+              left: (barWidth * normalizedValue) - 12,
               top: -18,
               child: const Icon(Icons.arrow_drop_down, color: Colors.red, size: 28),
             ),
+
+            // 현재값 텍스트
             Positioned(
-              left: (barWidth * normalizedValue - 16).clamp(0.0, barWidth - 40),
+              left: (barWidth * normalizedValue) - 16,
               top: 0,
               child: Text(
                 '${value.toStringAsFixed(1)}$unit',
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 10,
                 ),
               ),
             ),
+
+            // 최소값 텍스트
             Positioned(
-              left: isLowerBodyMinFix ? 12 : 0,
+              left: 0,
               top: 30,
               child: Text(
-                intMin.toString(),
+                min.toInt().toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -340,11 +332,13 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
+
+            // 이상최소값 텍스트
             Positioned(
-              left: barWidth * lowRange - 10,
+              left: barWidth * normalizedAnomalyMin - 10,
               top: 30,
               child: Text(
-                intLowStandard.toString(),
+                anomalyMin.toInt().toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -352,24 +346,14 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-            Positioned(
-              left: barWidth * (lowRange + stdRange) - 20,
-              top: 30,
-              child: Text(
-                intHighStandard.toString(),
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            if (!hideMaxValue)
+
+            // 이상최대값 텍스트 (중복 제거)
+            if (!hideAnomalyMax)
               Positioned(
-                left: isElbowAngleMaxFix ? barWidth - 60 : barWidth - 20,
+                left: barWidth * normalizedAnomalyMax - 20,
                 top: 30,
                 child: Text(
-                  intMax.toString(),
+                  anomalyMax.toInt().toString(),
                   style: const TextStyle(
                     color: Colors.black54,
                     fontWeight: FontWeight.bold,
@@ -377,6 +361,20 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   ),
                 ),
               ),
+
+            // 최대값 텍스트
+            Positioned(
+              left: barWidth - 20,
+              top: 30,
+              child: Text(
+                max.toInt().toString(),
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -442,9 +440,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ],
               ),
               const SizedBox(height: 12),
-
               buildVideoPlayerBox(),
-
               const SizedBox(height: 15),
               Text(
                 '반복 횟수: $repetitionCount 회',
@@ -455,6 +451,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 '총점: ${score.toStringAsFixed(1)} 점',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 10),
+              const Divider(thickness: 0.5, color: Colors.grey),
               const SizedBox(height: 10),
               Row(
                 children: const [
@@ -471,20 +469,19 @@ class _Analysis1PageState extends State<Analysis1Page> {
               const SizedBox(height: 12),
               buildInbodyBar(
                 value: lowerBodyScore,
-                min: 90,
-                lowStandard: 20,
-                highStandard: 0,
-                max: 0,
+                min: 0,
+                anomalyMin: 0,
+                anomalyMax: 20,
+                max: 90,
                 unit: '°',
-                isReverse: true,
               ),
               const SizedBox(height: 20),
               Text(
                 getLowerBodyGuide(lowerBodyScore),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 20),
@@ -503,8 +500,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
               buildInbodyBar(
                 value: palmMove,
                 min: 0,
-                lowStandard: 80,
-                highStandard: 90,
+                anomalyMin: 80,
+                anomalyMax: 90,
                 max: 90,
                 unit: '°',
               ),
@@ -512,9 +509,9 @@ class _Analysis1PageState extends State<Analysis1Page> {
               Text(
                 getPalmMoveGuide(palmMove),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 20),
@@ -533,8 +530,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
               buildInbodyBar(
                 value: shoulderOuter,
                 min: 0,
-                lowStandard: 20,
-                highStandard: 70,
+                anomalyMin: 20,
+                anomalyMax: 70,
                 max: 90,
                 unit: '°',
               ),
@@ -542,9 +539,9 @@ class _Analysis1PageState extends State<Analysis1Page> {
               Text(
                 getShoulderOuterGuide(shoulderOuter),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 20),
@@ -563,8 +560,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
               buildInbodyBar(
                 value: elbowAngle,
                 min: 0,
-                lowStandard: 80,
-                highStandard: 180,
+                anomalyMin: 80,
+                anomalyMax: 180,
                 max: 180,
                 unit: '°',
               ),
@@ -572,9 +569,9 @@ class _Analysis1PageState extends State<Analysis1Page> {
               Text(
                 getElbowAngleGuide(elbowAngle),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 30),
