@@ -87,7 +87,8 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     if rotate:
         width, height = height, width
 
-    output_dir = '/home/ubuntu/2025-1-CSC4004-1-3-Upper-Bound/backend/output_video'
+    #output_dir = '/home/ubuntu/2025-1-CSC4004-1-3-Upper-Bound/backend/output_video'   // 서버용 주소
+    
     os.makedirs(output_dir, exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 호환성 높임
     output_path = os.path.join(output_dir, f'output{analysisId}.mp4')
