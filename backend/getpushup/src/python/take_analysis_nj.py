@@ -87,18 +87,10 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     if rotate:
         width, height = height, width
 
-    print(f"[DEBUG] fps={fps}, width={width}, height={height}", file=sys.stderr)
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))  # 현재위치 backend/getpushup/src/python
-    output_dir = os.path.abspath(os.path.join(script_dir, '..', '..', '..', '..', 'output_video'))
+    output_dir = '../output_video/'
     os.makedirs(output_dir, exist_ok=True)
-
-    output_path = os.path.join(output_dir, f'output{analysisId}.mp4')
-
-    print(f"[DEBUG] Saving to: {output_path}", file=sys.stderr)
-    
     fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 호환성 높임
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    out = cv2.VideoWriter(output_dir + f'output{analysisId}.mp4', fourcc, fps, (width, height))
     
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
