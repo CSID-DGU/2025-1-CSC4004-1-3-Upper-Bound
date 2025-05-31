@@ -95,7 +95,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                     value.toInt().toString(),
                     style: const TextStyle(
                         color: Colors.black,
-                        fontSize: 7,
+                        fontSize: 6,
                         fontWeight: FontWeight.w600),
                   ),
                 );
@@ -209,7 +209,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 child: _buildLineChart(elbowY, Colors.blue,
                     anomalyMinY: 80,
                     anomalyMaxY: 90,
-                    leftInterval: 2.5,
+                    leftInterval: 5,
                     bottomInterval: 10),
               ),
               const SizedBox(height: 20),
@@ -222,7 +222,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 child: _buildLineChart(elbowFlexion, Colors.green,
                     anomalyMinY: 60,
                     anomalyMaxY: 180,
-                    leftInterval: 10,
+                    leftInterval: 20,
                     bottomInterval: 10),
               ),
               const SizedBox(height: 20),

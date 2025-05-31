@@ -215,7 +215,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
       return '손목 간격이 너무 좁은 경우 손목에 부하가 증가할 수 있습니다.';
     } else if (value >= 20 && value <= 60) {
       return '어깨 외전 각도가 적절합니다.';
-    } else if (value >= 60 && value <= 90) {
+    } else if (value > 60 && value <= 90) {
       return '손목 간격이 너무 넓은 경우 어깨충돌증후군 발생 위험이 있습니다.';
     } else {
       return 'Error!';
@@ -227,7 +227,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
       return '팔꿈치가 손목보다 뒤에 있을 경우 팔꿈치에 부하가 증가할 수 있습니다.';
     } else if (value >= 80 && value <= 100) {
       return '팔꿈치와 손목이 잘 정렬되어 있습니다.';
-    } else if (value >= 100 && value <= 180) {
+    } else if (value > 100 && value <= 180) {
       return '팔꿈치가 손목보다 앞에 있을 경우 어깨와 손목에 부하가 증가할 수 있습니다.';
     } else {
       return 'Error!';
@@ -242,6 +242,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
     required double max,
     required String unit,
     bool isReverse = false,
+    String widgetName = '', // 구분자 추가
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = 32.0;
@@ -258,14 +259,10 @@ class _Analysis1PageState extends State<Analysis1Page> {
 
     double totalRange = calcMax - calcMin;
 
-    // 위치 계산 (0~1 사이)
     double normalizedValue = ((calcValue - calcMin) / totalRange).clamp(0.0, 1.0);
-    double normalizedMin = 0.0;
     double normalizedAnomalyMin = ((anomalyMin - calcMin) / totalRange).clamp(0.0, 1.0);
     double normalizedAnomalyMax = ((anomalyMax - calcMin) / totalRange).clamp(0.0, 1.0);
-    double normalizedMax = 1.0;
 
-    // 최대값과 이상최대값이 같으면 이상최대값 표시하지 않음
     bool hideAnomalyMax = (anomalyMax == max);
 
     return Column(
@@ -274,7 +271,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            // 전체 바
             Container(
               width: barWidth,
               height: 20,
@@ -283,8 +279,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
-
-            // 이상범위 바 (파란색 반투명)
             Positioned(
               left: barWidth * normalizedAnomalyMin,
               top: 0,
@@ -297,15 +291,11 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
-            // 현재값 위치 화살표 아이콘
             Positioned(
               left: (barWidth * normalizedValue) - 12,
               top: -18,
               child: const Icon(Icons.arrow_drop_down, color: Colors.red, size: 28),
             ),
-
-            // 현재값 텍스트
             Positioned(
               left: (barWidth * normalizedValue) - 16,
               top: 0,
@@ -318,8 +308,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
-            // 최소값 텍스트
             Positioned(
               left: 0,
               top: 30,
@@ -332,8 +320,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
-            // 이상최소값 텍스트
             Positioned(
               left: barWidth * normalizedAnomalyMin - 10,
               top: 30,
@@ -346,8 +332,6 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ),
               ),
             ),
-
-            // 이상최대값 텍스트 (중복 제거)
             if (!hideAnomalyMax)
               Positioned(
                 left: barWidth * normalizedAnomalyMax - 20,
@@ -361,10 +345,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
                   ),
                 ),
               ),
-
-            // 최대값 텍스트
             Positioned(
-              left: barWidth - 20,
+              left: (widgetName == 'elbowAngle') ? barWidth - 30 : barWidth - 20,
               top: 30,
               child: Text(
                 max.toInt().toString(),
@@ -531,7 +513,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 value: shoulderOuter,
                 min: 0,
                 anomalyMin: 20,
-                anomalyMax: 70,
+                anomalyMax: 60, // 최대 이상값 60으로 변경
                 max: 90,
                 unit: '°',
               ),
@@ -550,7 +532,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
               Row(
                 children: const [
                   Text(
-                    '팔꿈치 굴곡 각도 (°)',
+                    '전완 각도 (°)',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 8),
@@ -561,9 +543,10 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 value: elbowAngle,
                 min: 0,
                 anomalyMin: 80,
-                anomalyMax: 180,
+                anomalyMax: 100, // 최대 이상값 100으로 변경
                 max: 180,
                 unit: '°',
+                widgetName: 'elbowAngle', // 위치 조정용
               ),
               const SizedBox(height: 20),
               Text(
