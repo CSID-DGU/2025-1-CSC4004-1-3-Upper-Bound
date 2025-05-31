@@ -90,7 +90,7 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     output_dir = os.path.abspath('../output_video/')  # 상대경로 > 절대경로 변환
     os.makedirs(output_dir, exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 호환성 높임
-    out = cv2.VideoWriter(output_dir + f'output{analysisId}.mp4', fourcc, fps, (width, height))
+    out = cv2.VideoWriter(output_dir + f'/output{analysisId}.mp4', fourcc, fps, (width, height))
     
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
