@@ -72,7 +72,6 @@ RIGHT_BODY_PARTS = {
     mp_pose.PoseLandmark.RIGHT_THUMB,
 }
 
-
 def detect_and_display(video_path, analysisId): # landmark 추출
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
