@@ -189,8 +189,12 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         subprocess.run([
             "ffmpeg", "-y",
             "-i", temp_avi_path,
+            "-vf", "scale=1280:720",        # 크기 낮추어 성능 조절
             "-vcodec", "libx264",
+            "-preset", "ultrafast",
+            "-crf", "28",       # 화질 낮추어 성능 조절
             "-acodec", "aac",
+            "-threads", "1",
             final_mp4_path
         ], check=True)
     except subprocess.CalledProcessError as e:
