@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 
 import 'analysis2.dart';
-import 'display_video_screen.dart';
+import '../globals/auth_user.dart';
 
 class Analysis1Page extends StatefulWidget {
   final int analysisId;
@@ -24,20 +25,46 @@ class _Analysis1PageState extends State<Analysis1Page> {
   double score = 0.0;
 
   bool _isLoading = true;
-  String? _rawJson;
-  String? _summaryJson;
   String? _error;
 
   String? userId;
-
-  List<String> videoUrls = [
-    'http://43.201.78.241:3000/pushup/upload',
-  ];
+  String? selectedVideoUrl;
+  VideoPlayerController? _videoController;
 
   @override
   void initState() {
     super.initState();
     loadUserIdAndFetchData();
+  }
+
+  Future<void> _initVideo(String url) async {
+    print(" Trying to load video from: $url"); // 로그 추가
+    await _videoController?.pause();
+    await _videoController?.dispose();
+
+    _videoController = VideoPlayerController.network(url);
+    _videoController!.addListener(() {
+      if (_videoController!.value.hasError) {
+        print('❌ Video player error: ${_videoController!.value.errorDescription}');
+      }
+    });
+
+    try {
+      await _videoController!.initialize();
+      _videoController!.setLooping(true);
+      if (mounted) {
+        setState(() {});
+        _videoController!.play();
+      }
+    } catch (e) {
+      print('❌ Video initialize error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
   }
 
   Future<void> loadUserIdAndFetchData() async {
@@ -48,26 +75,29 @@ class _Analysis1PageState extends State<Analysis1Page> {
     });
 
     if (userId != null) {
+      print("✅ userId found: $userId");
       await fetchAnalysisData(userId!);
     } else {
+      print("⚠️ userId is null. fetchAnalysisData() will not be called.");
       setState(() {
         _error = "User ID not found.";
         _isLoading = false;
       });
     }
+
   }
 
   Future<void> fetchAnalysisData(String userId) async {
+    print("fecthAnalysisData 시작");
     setState(() {
       _isLoading = true;
       _error = null;
-      _rawJson = null;
-      _summaryJson = null;
+      selectedVideoUrl = null;
     });
 
     try {
       final detailUrl = Uri.parse(
-          'http://43.201.78.241:3000/pushup/analytics?analysisId=${widget.analysisId}');
+          '$urlIp/pushup/analytics?analysisId=${widget.analysisId}');
       final detailResponse = await http.get(detailUrl);
 
       if (detailResponse.statusCode == 200) {
@@ -81,16 +111,25 @@ class _Analysis1PageState extends State<Analysis1Page> {
           });
           return;
         }
+
         final summary =
         (summaryRaw is String) ? jsonDecode(summaryRaw) : summaryRaw;
 
-        setState(() {
-          _rawJson = jsonEncode(detailData);
-          _summaryJson = jsonEncode(summary);
+        String? videoUrlFromApi = detailData['video_url'];
+        if (videoUrlFromApi != null && videoUrlFromApi.isNotEmpty) {
+          selectedVideoUrl = videoUrlFromApi;
+          await _initVideo(videoUrlFromApi);
+        } else {
+          selectedVideoUrl = '$urlIp/pushup/video/${widget.analysisId}';
+          print(' selectedVideoUrl: $selectedVideoUrl');
 
+          await _initVideo(selectedVideoUrl!);
+        }
+
+        setState(() {
           palmMove = (summary['elbow_motion'] as num?)?.toDouble() ?? 0.0;
           shoulderOuter =
-              (summary['shoulder_abduction'] as num?)?.toDouble() ?? 0.0;
+              ((summary['shoulder_abduction'] as num?)?.toDouble().abs()) ?? 0.0;
           elbowAngle = (summary['elbow_flexion'] as num?)?.toDouble() ?? 0.0;
           lowerBodyScore =
               (summary['lower_body_alignment_score'] as num?)?.toDouble() ?? 0.0;
@@ -117,54 +156,124 @@ class _Analysis1PageState extends State<Analysis1Page> {
     }
   }
 
-  String getPalmMoveGuide(double value) {
-    if (value < 40) {
-      return '팔꿈치를 몸에서 좀 더 벌려 공간을 확보하세요.';
-    } else if (value > 90) {
-      return '팔꿈치를 몸 쪽으로 살짝 모아 긴장을 줄이세요.';
+  Widget buildVideoPlayerBox() {
+    if (selectedVideoUrl == null) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const Text('영상 URL이 없습니다.', style: TextStyle(color: Colors.red)),
+      );
+    }
+
+    if (_videoController == null) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+
+    if (!_videoController!.value.isInitialized) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+
+    if (_videoController!.value.hasError) {
+      return Container(
+        height: 200,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: Text('영상 재생 오류: ${_videoController!.value.errorDescription}',
+            style: const TextStyle(color: Colors.red)),
+      );
+    }
+
+    return AspectRatio(
+      aspectRatio: _videoController!.value.aspectRatio,
+      child: VideoPlayer(_videoController!),
+    );
+  }
+
+  String getLowerBodyGuide(double value) {
+    if (value >= 20 && value <= 90) {
+      return '하체 정렬이 불균형한 상태입니다. 자세를 곧게 펴는 것이 좋습니다.';
+    } else if (value >= 0 && value < 20) {
+      return '하체 균형이 잘 잡혀있습니다.';
     } else {
-      return '팔꿈치 이동 범위가 적절합니다.';
+      return 'Error!';
+    }
+  }
+
+  String getPalmMoveGuide(double value) {
+    if (value < 80) {
+      return '하체가 안정적으로 정렬되어 있어 균형이 잘 잡혀 있습니다.';
+    } else if (value >= 80 && value <= 90) {
+      return '푸쉬업 가동범위가 적절합니다.';
+    } else {
+      return 'Error!';
     }
   }
 
   String getShoulderOuterGuide(double value) {
-    if (value < 20) {
-      return '팔을 몸 옆으로 곧게 들어 올려 주세요.';
-    } else if (value > 60) {
-      return '팔을 들어 올릴 때 어깨가 과도하게 올라가지 않도록 조절하세요.';
-    } else {
+    if (value < 20 && value >= 0) {
+      return '손목 간격이 너무 좁은 경우 손목에 부하가 증가할 수 있습니다.';
+    } else if (value >= 20 && value <= 60) {
       return '어깨 외전 각도가 적절합니다.';
+    } else if (value > 60 && value <= 90) {
+      return '손목 간격이 너무 넓은 경우 어깨충돌증후군 발생 위험이 있습니다.';
+    } else {
+      return 'Error!';
     }
   }
 
   String getElbowAngleGuide(double value) {
-    if (value < 60) {
-      return '팔꿈치를 더 깊게 굽혀 가슴 쪽으로 당기세요.';
-    } else if (value > 110) {
-      return '팔꿈치 굴곡 각도를 적절히 조절하세요.';
+    if (value < 80) {
+      return '팔꿈치가 손목보다 뒤에 있을 경우 팔꿈치에 부하가 증가할 수 있습니다.';
+    } else if (value >= 80 && value <= 100) {
+      return '팔꿈치와 손목이 잘 정렬되어 있습니다.';
+    } else if (value > 100 && value <= 180) {
+      return '팔꿈치가 손목보다 앞에 있을 경우 어깨와 손목에 부하가 증가할 수 있습니다.';
     } else {
-      return '팔꿈치 굴곡 범위가 적절합니다.';
+      return 'Error!';
     }
   }
 
   Widget buildInbodyBar({
     required double value,
     required double min,
-    required double lowStandard,
-    required double highStandard,
+    required double anomalyMin,
+    required double anomalyMax,
     required double max,
     required String unit,
+    bool isReverse = false,
+    String widgetName = '', // 구분자 추가
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = 32.0;
     final double barWidth = screenWidth - horizontalPadding;
 
-    double totalRange = max - min;
-    double lowRange = (lowStandard - min) / totalRange;
-    double stdRange = (highStandard - lowStandard) / totalRange;
-    double highRange = (max - highStandard) / totalRange;
+    double calcValue = isReverse ? (max + min - value) : value;
+    double calcMin = min;
+    double calcMax = max;
 
-    double normalizedValue = ((value - min) / totalRange).clamp(0.0, 1.0);
+    if (isReverse) {
+      calcMin = max;
+      calcMax = min;
+    }
+
+    double totalRange = calcMax - calcMin;
+
+    double normalizedValue = ((calcValue - calcMin) / totalRange).clamp(0.0, 1.0);
+    double normalizedAnomalyMin = ((anomalyMin - calcMin) / totalRange).clamp(0.0, 1.0);
+    double normalizedAnomalyMax = ((anomalyMax - calcMin) / totalRange).clamp(0.0, 1.0);
+
+    bool hideAnomalyMax = (anomalyMax == max);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,47 +281,48 @@ class _Analysis1PageState extends State<Analysis1Page> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: barWidth * lowRange,
-                  height: 20,
-                  color: Colors.grey[200],
-                ),
-                Container(
-                  width: barWidth * stdRange,
-                  height: 20,
-                  color: Colors.blue[200],
-                ),
-                Container(
-                  width: barWidth * highRange,
-                  height: 20,
-                  color: Colors.grey[200],
-                ),
-              ],
+            Container(
+              width: barWidth,
+              height: 20,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(5),
+              ),
             ),
             Positioned(
-              left: (barWidth * normalizedValue - 12).clamp(0.0, barWidth - 40),
+              left: barWidth * normalizedAnomalyMin,
+              top: 0,
+              width: barWidth * (normalizedAnomalyMax - normalizedAnomalyMin),
+              height: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+            ),
+            Positioned(
+              left: (barWidth * normalizedValue) - 12,
               top: -18,
               child: const Icon(Icons.arrow_drop_down, color: Colors.red, size: 28),
             ),
             Positioned(
-              left: (barWidth * normalizedValue - 16).clamp(0.0, barWidth - 40),
+              left: (barWidth * normalizedValue) - 16,
               top: 0,
               child: Text(
                 '${value.toStringAsFixed(1)}$unit',
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 10,
                 ),
               ),
             ),
             Positioned(
-              left: barWidth * lowRange - 10,
+              left: 0,
               top: 30,
               child: Text(
-                lowStandard.toString(),
+                min.toInt().toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -221,10 +331,35 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
             ),
             Positioned(
-              left: barWidth * (lowRange + stdRange) - 10,
+              left: barWidth * normalizedAnomalyMin - 10,
               top: 30,
               child: Text(
-                highStandard.toString(),
+                anomalyMin.toInt().toString(),
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            if (!hideAnomalyMax)
+              Positioned(
+                left: barWidth * normalizedAnomalyMax - 20,
+                top: 30,
+                child: Text(
+                  anomalyMax.toInt().toString(),
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            Positioned(
+              left: (widgetName == 'elbowAngle') ? barWidth - 30 : barWidth - 20,
+              top: 30,
+              child: Text(
+                max.toInt().toString(),
                 style: const TextStyle(
                   color: Colors.black54,
                   fontWeight: FontWeight.bold,
@@ -234,48 +369,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
             ),
           ],
         ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-
-  Widget buildVideoList() {
-    if (videoUrls.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: videoUrls.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final url = videoUrls[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DisplayVideoScreen(videoPath: url),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 200,
-                  color: Colors.grey[300],
-                  alignment: Alignment.center,
-                  child: Text(
-                    '영상 ${index + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -297,8 +391,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
             ? const Center(child: CircularProgressIndicator())
             : _error != null
             ? Center(
-          child: Text(_error!,
-              style: const TextStyle(color: Colors.red)),
+          child: Text(_error!, style: const TextStyle(color: Colors.red)),
         )
             : SingleChildScrollView(
           child: Column(
@@ -322,8 +415,9 @@ class _Analysis1PageState extends State<Analysis1Page> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => Analysis2Page(
-                                analysisId: widget.analysisId)),
+                          builder: (context) =>
+                              Analysis2Page(analysisId: widget.analysisId),
+                        ),
                       );
                     },
                     child: const Text(
@@ -338,120 +432,139 @@ class _Analysis1PageState extends State<Analysis1Page> {
                 ],
               ),
               const SizedBox(height: 12),
-              buildVideoList(),
+              buildVideoPlayerBox(),
               const SizedBox(height: 15),
               Text(
                 '반복 횟수: $repetitionCount 회',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '하체 정렬 점수: ${lowerBodyScore.toStringAsFixed(1)} 점',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               Text(
                 '총점: ${score.toStringAsFixed(1)} 점',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
-              // 팔꿈치 이동 정도
+              const Divider(thickness: 0.5, color: Colors.grey),
+              const SizedBox(height: 10),
               Row(
-                children: [
-                  const Text(
-                    '팔꿈치 이동 정도 (°)',
+                children: const [
+                  Text(
+                    '하체 정렬 (°)',
                     style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                  const SizedBox(width: 8),
                 ],
               ),
               const SizedBox(height: 12),
               buildInbodyBar(
-                value: palmMove,
-                min: 40,
-                lowStandard: 60,
-                highStandard: 90,
-                max: 110,
+                value: lowerBodyScore,
+                min: 0,
+                anomalyMin: 0,
+                anomalyMax: 20,
+                max: 90,
                 unit: '°',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
+              Text(
+                getLowerBodyGuide(lowerBodyScore),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Divider(thickness: 0.5, color: Colors.grey),
+              const SizedBox(height: 20),
+              Row(
+                children: const [
+                  Text(
+                    '가동 범위 (°)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 8),
+                ],
+              ),
+              const SizedBox(height: 20),
+              buildInbodyBar(
+                value: palmMove,
+                min: 0,
+                anomalyMin: 80,
+                anomalyMax: 90,
+                max: 90,
+                unit: '°',
+              ),
+              const SizedBox(height: 20),
               Text(
                 getPalmMoveGuide(palmMove),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
-              const SizedBox(height: 10),
-
-              // 어깨 외전 각도
+              const SizedBox(height: 20),
               Row(
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     '어깨 외전 각도 (°)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               buildInbodyBar(
-                value: shoulderOuter,
-                min: 20,
-                lowStandard: 30,
-                highStandard: 60,
-                max: 70,
+                value: shoulderOuter.abs(),
+                min: 0,
+                anomalyMin: 20,
+                anomalyMax: 60, // 최대 이상값 60으로 변경
+                max: 90,
                 unit: '°',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
               Text(
-                getShoulderOuterGuide(shoulderOuter),
+                getShoulderOuterGuide(shoulderOuter.abs()),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               const Divider(thickness: 0.5, color: Colors.grey),
-              const SizedBox(height: 10),
-
-              // 팔꿈치 굴곡 각도
+              const SizedBox(height: 20),
               Row(
-                children: [
-                  const Text(
-                    '팔꿈치 굴곡 각도 (°)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                children: const [
+                  Text(
+                    '전완 각도 (°)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               buildInbodyBar(
                 value: elbowAngle,
-                min: 70,
-                lowStandard: 90,
-                highStandard: 110,
-                max: 130,
+                min: 0,
+                anomalyMin: 80,
+                anomalyMax: 100, // 최대 이상값 100으로 변경
+                max: 180,
                 unit: '°',
+                widgetName: 'elbowAngle', // 위치 조정용
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
               Text(
                 getElbowAngleGuide(elbowAngle),
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 30),

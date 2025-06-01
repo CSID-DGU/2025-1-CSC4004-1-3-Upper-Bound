@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../models/pushup_analysis.dart';
+import '../globals/auth_user.dart';
 
 Future<PushupAnalysis?> getPushupAnalytics(String analysisId) async {
-  final url = Uri.parse('http://43.201.78.241:3000/pushup/analytics?analysisId=$analysisId');
+  final url = Uri.parse('$urlIp/pushup/analytics?analysisId=$analysisId');
 
   try {
     final response = await http.get(url);
