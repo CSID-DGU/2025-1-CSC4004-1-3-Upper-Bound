@@ -51,6 +51,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
 
     try {
       await _videoController!.initialize();
+      _videoController!.setLooping(true);
       if (mounted) {
         setState(() {});
         _videoController!.play();
@@ -128,7 +129,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
         setState(() {
           palmMove = (summary['elbow_motion'] as num?)?.toDouble() ?? 0.0;
           shoulderOuter =
-              (summary['shoulder_abduction'] as num?)?.toDouble() ?? 0.0;
+              ((summary['shoulder_abduction'] as num?)?.toDouble().abs()) ?? 0.0;
           elbowAngle = (summary['elbow_flexion'] as num?)?.toDouble() ?? 0.0;
           lowerBodyScore =
               (summary['lower_body_alignment_score'] as num?)?.toDouble() ?? 0.0;
@@ -519,7 +520,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
               const SizedBox(height: 20),
               buildInbodyBar(
-                value: shoulderOuter,
+                value: shoulderOuter.abs(),
                 min: 0,
                 anomalyMin: 20,
                 anomalyMax: 60, // 최대 이상값 60으로 변경
@@ -528,7 +529,7 @@ class _Analysis1PageState extends State<Analysis1Page> {
               ),
               const SizedBox(height: 20),
               Text(
-                getShoulderOuterGuide(shoulderOuter),
+                getShoulderOuterGuide(shoulderOuter.abs()),
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black87,

@@ -209,7 +209,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
                 child: _buildLineChart(elbowY, Colors.blue,
                     anomalyMinY: 80,
                     anomalyMaxY: 90,
-                    leftInterval: 5,
+                    leftInterval: 20,
                     bottomInterval: 10),
               ),
               const SizedBox(height: 20),
