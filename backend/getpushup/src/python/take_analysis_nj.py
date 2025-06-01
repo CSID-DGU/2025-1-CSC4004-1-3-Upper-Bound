@@ -4,6 +4,7 @@ import mediapipe as mp
 import os
 import numpy as np
 import math
+import subprocess
 
 import matplotlib.pyplot as plt
 
@@ -89,8 +90,12 @@ def detect_and_display(video_path, analysisId): # landmark 추출
 
     output_dir = '../output_video/'
     os.makedirs(output_dir, exist_ok=True)
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 호환성 높임
-    out = cv2.VideoWriter(output_dir + f'output{analysisId}.mp4', fourcc, fps, (width, height))
+
+    temp_avi_path = os.path.join(output_dir, f'temp{analysisId}.avi')  # 임시 avi 파일(mp4v 사용)
+    final_mp4_path = os.path.join(output_dir, f'output{analysisId}.mp4')  # 최종 h264 mp4(avc1 사용)
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # avi용
+    out = cv2.VideoWriter(temp_avi_path, fourcc, fps, (width, height))
     
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
@@ -178,6 +183,20 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     out.release()
     cap.release()
     cv2.destroyAllWindows()
+
+    try:    # avi를 mp4로 변경(avc1)
+        subprocess.run([
+            "ffmpeg", "-y",
+            "-i", temp_avi_path,
+            "-vcodec", "libx264",
+            "-acodec", "aac",
+            final_mp4_path
+        ], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"FFmpeg 인코딩 실패: {e}")
+
+    if os.path.exists(temp_avi_path):
+        os.remove(temp_avi_path)
 
 def calculate_angle(a, b, c):
     a = np.array(a) 
