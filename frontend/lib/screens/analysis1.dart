@@ -38,22 +38,25 @@ class _Analysis1PageState extends State<Analysis1Page> {
   }
 
   Future<void> _initVideo(String url) async {
+    print(" Trying to load video from: $url"); // 로그 추가
     await _videoController?.pause();
     await _videoController?.dispose();
 
     _videoController = VideoPlayerController.network(url);
     _videoController!.addListener(() {
       if (_videoController!.value.hasError) {
-        print('Video player error: ${_videoController!.value.errorDescription}');
+        print('❌ Video player error: ${_videoController!.value.errorDescription}');
       }
     });
 
     try {
       await _videoController!.initialize();
-      setState(() {});
-      _videoController!.play();
+      if (mounted) {
+        setState(() {});
+        _videoController!.play();
+      }
     } catch (e) {
-      print('Video initialize error: $e');
+      print('❌ Video initialize error: $e');
     }
   }
 
@@ -71,16 +74,20 @@ class _Analysis1PageState extends State<Analysis1Page> {
     });
 
     if (userId != null) {
+      print("✅ userId found: $userId");
       await fetchAnalysisData(userId!);
     } else {
+      print("⚠️ userId is null. fetchAnalysisData() will not be called.");
       setState(() {
         _error = "User ID not found.";
         _isLoading = false;
       });
     }
+
   }
 
   Future<void> fetchAnalysisData(String userId) async {
+    print("fecthAnalysisData 시작");
     setState(() {
       _isLoading = true;
       _error = null;
@@ -113,6 +120,8 @@ class _Analysis1PageState extends State<Analysis1Page> {
           await _initVideo(videoUrlFromApi);
         } else {
           selectedVideoUrl = '$urlIp/pushup/video/${widget.analysisId}';
+          print(' selectedVideoUrl: $selectedVideoUrl');
+
           await _initVideo(selectedVideoUrl!);
         }
 
