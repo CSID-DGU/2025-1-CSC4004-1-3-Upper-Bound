@@ -195,6 +195,7 @@ def detect_and_display(video_path, analysisId): # landmark 추출
         ], check=True)
     except subprocess.CalledProcessError as e:
         print(f"FFmpeg 인코딩 실패: {e}")
+        return
 
     if os.path.exists(temp_avi_path):
         os.remove(temp_avi_path)
