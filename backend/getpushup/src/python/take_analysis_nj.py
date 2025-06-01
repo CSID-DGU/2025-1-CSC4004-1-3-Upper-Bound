@@ -90,7 +90,6 @@ def detect_and_display(video_path, analysisId): # landmark 추출
 
 
     output_dir = '../output_video/'
-    #output_dir = '/home/ubuntu/2025-1-CSC4004-1-3-Upper-Bound/backend/output_video/'  # 서버용 주소
     os.makedirs(output_dir, exist_ok=True)
 
     temp_avi_path = os.path.join(output_dir, f'temp{analysisId}.avi')  # 임시 avi 파일(mp4v 사용)
