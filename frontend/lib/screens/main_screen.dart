@@ -134,6 +134,23 @@ class _MainScreenState extends State<MainScreen> {
                       painter: HandGuidePainter(),
                     ),
 
+                    if (!_isRecording)
+                      Positioned.fill(
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: Transform.translate(
+                            offset: Offset(-30, 105),
+                            child: Transform.rotate(
+                              angle: 90 * 3.1415926535 / 180, // 90도 시계방향
+                              child: Image.asset(
+                                'assets/images/remove_ui.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
                     // 카운트다운 오버레이
                     if (_isCountingDown)
                       Container(
@@ -151,6 +168,8 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         ),
                       ),
+
+                    // 업로드 중 오버레이
                     if (_isUploading)
                       Container(
                         color: Colors.black.withOpacity(0.6),
@@ -174,12 +193,10 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         ),
                       ),
-
                   ],
                 ),
               ),
             );
-
           } else {
             return const Center(child: CircularProgressIndicator());
           }
