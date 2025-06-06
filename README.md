@@ -48,3 +48,7 @@
   - 팔꿈치 가동 범위
   - 하체 정렬
 ---
+## 3. branch 구조 및 작업 방법
+<img width="631" alt="image" src="https://github.com/user-attachments/assets/6dacc76b-f3a5-490d-b334-3893cf246995" />
+
+
