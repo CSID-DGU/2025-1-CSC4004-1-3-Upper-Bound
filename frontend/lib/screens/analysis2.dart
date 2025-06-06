@@ -29,21 +29,38 @@ class _Analysis2PageState extends State<Analysis2Page> {
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(Uri.parse(
-        '$urlIp/pushup/analytics?analysisId=${widget.analysisId}'));
+    try {
+      final response = await http.get(Uri.parse(
+          '$urlIp/pushup/analytics?analysisId=${widget.analysisId}'));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('data length: ${data['timeseries']['elbow_y'].length}, fps: $fps');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('data length: ${data['timeseries']['elbow_y'].length}, fps: $fps');
+
+        setState(() {
+          elbowY = List<double>.from(
+              data['timeseries']['elbow_y'].map((e) => (e as num).toDouble())
+          );
+          elbowFlexion = List<double>.from(
+              data['timeseries']['elbow_flexion'].map((e) => (e as num).toDouble())
+          );
+          lowerBodyAngle = List<double>.from(
+              data['timeseries']['lower_body_angle'].map((e) => (e as num).toDouble())
+          );
+          isLoading = false;
+        });
+
+      } else {
+        throw Exception('데이터 로드 실패');
+      }
+    } catch (e) {
+      print('데이터 로드 중 오류 발생: $e');
       setState(() {
-        elbowY = List<double>.from(data['timeseries']['elbow_y']);
-        elbowFlexion = List<double>.from(data['timeseries']['elbow_flexion']);
-        lowerBodyAngle =
-        List<double>.from(data['timeseries']['lower_body_angle']);
-        isLoading = false;
+        isLoading = false;  // 오류가 나도 로딩 중지
       });
-    } else {
-      throw Exception('데이터 로드 실패');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('데이터 로드 실패: $e')),
+      );
     }
   }
 
