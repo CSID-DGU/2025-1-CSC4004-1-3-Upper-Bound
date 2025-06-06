@@ -20,7 +20,7 @@ class _Analysis2PageState extends State<Analysis2Page> {
   late List<double> lowerBodyAngle = [];
   bool isLoading = true;
 
-  final double fps = 1.0; // fps를 1로 낮춤 (초당 1 프레임)
+  final double fps = 1.0;
 
   @override
   void initState() {
@@ -29,42 +29,66 @@ class _Analysis2PageState extends State<Analysis2Page> {
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(Uri.parse(
-        '$urlIp/pushup/analytics?analysisId=${widget.analysisId}'));
+    try {
+      final response = await http.get(Uri.parse(
+          '$urlIp/pushup/analytics?analysisId=${widget.analysisId}'));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('data length: ${data['timeseries']['elbow_y'].length}, fps: $fps');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('data length: ${data['timeseries']['elbow_y'].length}, fps: $fps');
+
+        setState(() {
+          elbowY = List<double>.from(
+              data['timeseries']['elbow_y'].map((e) => (e as num).toDouble())
+          );
+          elbowFlexion = List<double>.from(
+              data['timeseries']['elbow_flexion'].map((e) => (e as num).toDouble())
+          );
+          lowerBodyAngle = List<double>.from(
+              data['timeseries']['lower_body_angle'].map((e) => (e as num).toDouble())
+          );
+          isLoading = false;
+        });
+
+      } else {
+        throw Exception('데이터 로드 실패');
+      }
+    } catch (e) {
+      print('데이터 로드 중 오류 발생: $e');
       setState(() {
-        elbowY = List<double>.from(data['timeseries']['elbow_y']);
-        elbowFlexion = List<double>.from(data['timeseries']['elbow_flexion']);
-        lowerBodyAngle =
-        List<double>.from(data['timeseries']['lower_body_angle']);
-        isLoading = false;
+        isLoading = false;  // 오류가 나도 로딩 중지
       });
-    } else {
-      throw Exception('데이터 로드 실패');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('데이터 로드 실패: $e')),
+      );
     }
   }
 
-  // anomalyMinY, anomalyMaxY 지정하면 이상값 박스 표시
   Widget _buildLineChart(List<double> data, Color color,
-      {double? anomalyMinY, double? anomalyMaxY}) {
+      {double? anomalyMinY,
+        double? anomalyMaxY,
+        double leftInterval = 10,
+        double bottomInterval = 10}) {
     const margin = 5.0;
     double minY = data.reduce((a, b) => a < b ? a : b) - margin;
     double maxY = data.reduce((a, b) => a > b ? a : b) + margin;
+
     if (minY > maxY) {
       final temp = minY;
       minY = maxY;
       maxY = temp;
     }
 
+    // 이상 구간 포함하도록 y축 범위 보정
+    if (anomalyMinY != null && anomalyMinY < minY) minY = anomalyMinY - margin;
+    if (anomalyMaxY != null && anomalyMaxY > maxY) maxY = anomalyMaxY + margin;
+
     final List<HorizontalRangeAnnotation> anomalyRanges = [];
     if (anomalyMinY != null && anomalyMaxY != null) {
       anomalyRanges.add(HorizontalRangeAnnotation(
         y1: anomalyMinY,
         y2: anomalyMaxY,
-        color: Colors.blue.withOpacity(0.2),  // 파란색으로 변경
+        color: Colors.blue.withOpacity(0.2),
       ));
     }
 
@@ -79,11 +103,18 @@ class _Analysis2PageState extends State<Analysis2Page> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 5,
+              interval: bottomInterval,
               getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                if (value % bottomInterval != 0) return const SizedBox.shrink();
+                return Transform.rotate(
+                  angle: -45 * 3.1415927 / 180,
+                  child: Text(
+                    value.toInt().toString(),
+                    style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 6,
+                        fontWeight: FontWeight.w600),
+                  ),
                 );
               },
             ),
@@ -91,11 +122,17 @@ class _Analysis2PageState extends State<Analysis2Page> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 10,
+              interval: leftInterval,
               getTitlesWidget: (value, meta) {
+                if (value == minY || value == maxY) {
+                  return const SizedBox.shrink();
+                }
                 return Text(
                   value.toInt().toString(),
-                  style: const TextStyle(fontSize: 10, color: Colors.black),
+                  style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black),
                 );
               },
             ),
@@ -184,33 +221,39 @@ class _Analysis2PageState extends State<Analysis2Page> {
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              // 팔꿈치 상하 움직임에만 100~120 구간 이상값 박스 표시
               SizedBox(
-                height: 300,
+                height: 200,
                 child: _buildLineChart(elbowY, Colors.blue,
-                    anomalyMinY: 100, anomalyMaxY: 120),
+                    anomalyMinY: 80,
+                    anomalyMaxY: 90,
+                    leftInterval: 20,
+                    bottomInterval: 10),
               ),
               const SizedBox(height: 20),
               const Text('팔꿈치 굽힘 각도',
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              // 팔꿈치 굽힘 각도에 0~20 구간 이상값 박스 표시 추가
               SizedBox(
-                height: 300,
+                height: 200,
                 child: _buildLineChart(elbowFlexion, Colors.green,
-                    anomalyMinY: 0, anomalyMaxY: 20),
+                    anomalyMinY: 60,
+                    anomalyMaxY: 180,
+                    leftInterval: 20,
+                    bottomInterval: 10),
               ),
               const SizedBox(height: 20),
               const Text('하체 각도',
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              // 하체 각도에 0~10 구간 이상값 박스 표시 추가
               SizedBox(
-                height: 300,
+                height: 200,
                 child: _buildLineChart(lowerBodyAngle, Colors.orange,
-                    anomalyMinY: 0, anomalyMaxY: 10),
+                    anomalyMinY: 0,
+                    anomalyMaxY: 20,
+                    leftInterval: 10,
+                    bottomInterval: 10),
               ),
             ],
           ),
