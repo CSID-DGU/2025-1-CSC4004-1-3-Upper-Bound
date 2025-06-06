@@ -5,7 +5,7 @@
 
 ### 🧑‍🤝‍🧑 구성원  
 |서한유|강세희|송유진|우승민|배인호|
-| :------: | :------: | :------: | :------: | :------: |
+| :--------: | :--------: | :--------: | :--------: | :--------: |
 |멀티미디어<br>소프트웨어공학전공|컴퓨터공학전공|컴퓨터공학전공|컴퓨터공학전공|멀티미디어<br>소프트웨어공학전공|
 |TL/BE|FE |FE| BE|BE|
 | <img src="https://github.com/hu5768.png" width="100"> | <img src="https://github.com/ehsui.png" width="100"> | <img src="https://github.com/Son9YuJin.png" width="100"> | <img src="https://github.com/SeungMin-Woo.png" width="100"> |<img src="https://github.com/BAE-INHO.png" width="100"> |
