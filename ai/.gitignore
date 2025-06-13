@@ -1,0 +1,12 @@
+#venv
+aipy/
+venv/
+env/
+.venv/
+
+#py
+__pycache__/
+*.pyc
+
+#video
+**/*.mp4
