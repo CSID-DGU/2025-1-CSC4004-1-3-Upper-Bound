@@ -139,17 +139,22 @@ class _MainScreenState extends State<MainScreen> {
                         child: Opacity(
                           opacity: 0.5,
                           child: Transform.translate(
-                            offset: Offset(-30, 105),
+                            offset: Offset(-30, -105),
                             child: Transform.rotate(
                               angle: 90 * 3.1415926535 / 180, // 90도 시계방향
-                              child: Image.asset(
-                                'assets/images/remove_ui.png',
-                                fit: BoxFit.contain,
+                              child: Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0), // 좌우 반전
+                                child: Image.asset(
+                                  'assets/images/remove_ui.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
+
 
                     // 카운트다운 오버레이
                     if (_isCountingDown)
