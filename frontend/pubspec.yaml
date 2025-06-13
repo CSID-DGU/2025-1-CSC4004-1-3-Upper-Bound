@@ -16,6 +16,8 @@ dependencies:
   shared_preferences: ^2.2.2
   permission_handler: ^11.0.1
   fl_chart: ^0.66.0
+  audioplayers: ^5.2.1
+  video_compress: ^3.1.2
 
 
 dev_dependencies:
@@ -28,3 +30,4 @@ flutter:
 
   assets:
     - assets/images/remove_ui.png
+    - assets/sounds/start_sound.wav

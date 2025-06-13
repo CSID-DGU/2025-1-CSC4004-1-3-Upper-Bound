@@ -5,6 +5,7 @@ import '../utils/hand_guide_painter.dart';
 import '../services/video_upload_service.dart';
 import '../globals/auth_user.dart';
 import 'analysis1.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class MainScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -23,6 +24,9 @@ class _MainScreenState extends State<MainScreen> {
   bool _isCountingDown = false;
   bool _isUploading = false;
 
+  // 효과음 재생
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +42,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -89,7 +94,9 @@ class _MainScreenState extends State<MainScreen> {
           _isCountingDown = false;
         });
 
-        // 3초 후 녹화 시작
+        // 5초 후 녹화 시작, 효과음 재생
+        await _audioPlayer.play(AssetSource('sounds/start_sound.wav'));
+
         await _controller.prepareForVideoRecording();
         await _controller.startVideoRecording();
         setState(() => _isRecording = true);
