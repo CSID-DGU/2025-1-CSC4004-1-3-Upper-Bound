@@ -1,0 +1,57 @@
+# ---------------------------------------
+# Miscellaneous
+# ---------------------------------------
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# ---------------------------------------
+# IDE 관련
+# ---------------------------------------
+*.iml
+*.ipr
+*.iws
+.idea/
+# .vscode/ # 필요 시 주석 제거
+
+# ---------------------------------------
+# Flutter / Dart / Pub 관련
+# ---------------------------------------
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+
+# ---------------------------------------
+# Android 관련
+# ---------------------------------------
+/android/app/debug
+/android/app/profile
+/android/app/release
+android/**/build/
+android/**/.cxx/
+
+# ---------------------------------------
+# 기타 자동 생성 파일
+# ---------------------------------------
+*.bin
+*.json
+*.xml
+*.txt
+
+# ---------------------------------------
+# Symbolication / Obfuscation
+# ---------------------------------------
+app.*.symbols
+app.*.map.json
