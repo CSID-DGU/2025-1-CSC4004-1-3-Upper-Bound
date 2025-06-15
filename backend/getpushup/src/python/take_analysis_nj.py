@@ -92,11 +92,13 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     output_dir = '../output_video/'
     os.makedirs(output_dir, exist_ok=True)
 
-    temp_avi_path = os.path.join(output_dir, f'temp{analysisId}.avi')  # 임시 avi 파일(mp4v 사용)
-    final_mp4_path = os.path.join(output_dir, f'output{analysisId}.mp4')  # 최종 h264 mp4(avc1 사용)
+    #temp_avi_path = os.path.join(output_dir, f'temp{analysisId}.avi')  # 임시 avi 파일(mp4v 사용) / 서버용
+    final_mp4_path = os.path.join(output_dir, f'output{analysisId}.mp4')  # 최종 h264 mp4(avc1 사용) / 서버 or 로컬용
 
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # avi용
-    out = cv2.VideoWriter(temp_avi_path, fourcc, fps, (width, height))
+    #fourcc = cv2.VideoWriter_fourcc(*'XVID')  # 서버용
+    fourcc = cv2.VideoWriter_fourcc(*'avc3')  # 로컬용
+    #out = cv2.VideoWriter(temp_avi_path, fourcc, fps, (width, height)) #서버용
+    out = cv2.VideoWriter(final_mp4_path, fourcc, fps, (width, height)) #로컬용
     
     # print("Saving to:", os.path.abspath('output_with_pose.mp4'))
     frame_idx = 0
@@ -185,24 +187,25 @@ def detect_and_display(video_path, analysisId): # landmark 추출
     cap.release()
     cv2.destroyAllWindows()
 
-    try:    # avi를 mp4로 변경(avc1)
-        subprocess.run([
-            "ffmpeg", "-y",
-            "-i", temp_avi_path,
-            "-vf", "scale=1280:720",        # 크기 낮추어 성능 조절
-            "-vcodec", "libx264",
-            "-preset", "ultrafast",
-            "-crf", "28",       # 화질 낮추어 성능 조절
-            "-acodec", "aac",
-            "-threads", "1",
-            final_mp4_path
-        ], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"FFmpeg 인코딩 실패: {e}")
-        return
+    # 아래 코드 모두 서버용
+    #try:    # avi를 mp4로 변경(avc1)
+    #    subprocess.run([
+    #        "ffmpeg", "-y",
+    #        "-i", temp_avi_path,
+    #        "-vf", "scale=1280:720",        # 크기 낮추어 성능 조절
+    #        "-vcodec", "libx264",
+    #        "-preset", "ultrafast",
+    #        "-crf", "28",       # 화질 낮추어 성능 조절
+    #        "-acodec", "aac",
+    #        "-threads", "1",
+    #        final_mp4_path
+    #    ], check=True)
+    #except subprocess.CalledProcessError as e:
+    #    print(f"FFmpeg 인코딩 실패: {e}")
+    #    return
 
-    if os.path.exists(temp_avi_path):
-        os.remove(temp_avi_path)
+    #if os.path.exists(temp_avi_path):
+    #    os.remove(temp_avi_path)
 
 def calculate_angle(a, b, c):
     a = np.array(a) 
